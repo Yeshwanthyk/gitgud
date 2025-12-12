@@ -1,17 +1,38 @@
 {
-  "name": "gitgud",
+  "name": "gitgud-skills",
   "version": "0.1.0",
+  "description": "CLI for managing AI agent skills",
+  "keywords": [
+    "cli",
+    "ai",
+    "agents",
+    "skills",
+    "claude",
+    "claude-code"
+  ],
+  "author": "yesh",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yesh/gitgud"
+  },
   "type": "module",
-  "bin": "./dist/cli.js",
+  "bin": {
+    "gitgud": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "bun --watch src/cli.ts",
-    "build": "bun build src/cli.ts --outdir dist --target bun",
+    "build": "bun build src/cli.ts --outdir dist --target bun --external giget --external yaml",
+    "build:binary": "bun build src/cli.ts --compile --outfile dist/gitgud",
+    "prepublishOnly": "bun run build",
     "check": "biome check .",
     "test": "bun test",
     "format": "biome format . --write"
   },
   "dependencies": {
-    "giget": "^2.0.0",
     "yaml": "^2.0.0"
   },
   "devDependencies": {
