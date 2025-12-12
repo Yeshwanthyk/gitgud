@@ -2,6 +2,14 @@
 
 All notable changes to gitgud will be documented in this file.
 
+## [0.0.2] - 2025-12-12
+
+### Changed
+
+- **Precedence order updated**: gitgud skills now take priority over Claude skills
+  - local .gitgud (highest) → global .gitgud → local .claude → global .claude (lowest)
+  - Allows users to override any Claude skill with custom versions
+
 ## [0.0.1] - 2025-12-11
 
 First release.
