@@ -17,9 +17,9 @@ It is designed to work with Claude Code’s skills system, while adding registry
 Once published:
 
 ```bash
-bun install -g gitgud
+bun install -g gitgud-skills
 # or
-npx gitgud
+npx gitgud-skills
 ```
 
 From source (this repo):
