@@ -35,3 +35,12 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Binaries
 dist/gitgud-*
+
+# Internal/dev files
+BEADS.md
+CLAUDE.md
+plan.md
+.claude/
+.gitgud/
+.cursor/
+.beads/
