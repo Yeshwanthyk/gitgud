@@ -2,6 +2,22 @@
 
 All notable changes to gitgud will be documented in this file.
 
+## [0.0.4] - 2025-12-12
+
+### Added
+
+- **Auto-discovery of nested skills**: When installing from GitHub, gitgud now automatically finds SKILL.md files in subdirectories
+  - No need to specify full path for repos with skills in nested folders (e.g., `skills/dev-browser/`)
+  - Single skill found → installs automatically
+  - Multiple skills found → helpful error listing available paths
+
+### Improved
+
+- **Better registry 404 errors**: When a skill isn't in the claude-plugins registry, now shows:
+  - Clear "not found" message
+  - Ready-to-use GitHub install command as alternative
+  - Link to browse available skills
+
 ## [0.0.3] - 2025-12-12
 
 ### Added

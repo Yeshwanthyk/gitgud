@@ -1,8 +1,15 @@
 {
 	"name": "gitgud-skills",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"description": "CLI for managing AI agent skills",
-	"keywords": ["cli", "ai", "agents", "skills", "claude", "claude-code"],
+	"keywords": [
+		"cli",
+		"ai",
+		"agents",
+		"skills",
+		"claude",
+		"claude-code"
+	],
 	"author": "yesh",
 	"license": "Apache-2.0",
 	"repository": {
@@ -13,7 +20,9 @@
 	"bin": {
 		"gitgud": "./dist/cli.js"
 	},
-	"files": ["dist/cli.js"],
+	"files": [
+		"dist/cli.js"
+	],
 	"scripts": {
 		"dev": "bun --watch src/cli.ts",
 		"build": "bun build src/cli.ts --outdir dist --target bun --external giget --external yaml",
