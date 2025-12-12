@@ -4,9 +4,9 @@ All notable changes to gitgud will be documented in this file.
 
 ## [0.0.1] - 2025-12-11
 
-First release! 🎉
+First release.
 
-### ✨ New Features
+### New Features
 
 - **Multi-Source Installation**: Install skills from anywhere
   - Claude-plugins registry: `gitgud install @anthropics/claude-code/frontend-design`
@@ -29,11 +29,11 @@ First release! 🎉
   - Progressive disclosure pattern: list → search → show
 
 - **Standalone Binaries**: No runtime dependencies
-  - macOS (Apple Silicon & Intel)
-  - Linux (x64 & ARM64)
+  - macOS (Apple Silicon and Intel)
+  - Linux (x64 and ARM64)
   - One-line install: `curl -fsSL https://raw.githubusercontent.com/Yeshwanthyk/gitgud/main/install.sh | bash`
 
-### 📦 Installation
+### Installation
 
 ```bash
 # Quick install (recommended)
@@ -44,8 +44,8 @@ npx gitgud-skills list
 bun install -g gitgud-skills
 ```
 
-### 🔧 Technical
+### Technical
 
-- Built with Bun + TypeScript
+- Built with Bun and TypeScript
 - 40 tests with full coverage of core functionality
 - Apache-2.0 license
