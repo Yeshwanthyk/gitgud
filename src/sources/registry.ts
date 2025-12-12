@@ -42,6 +42,19 @@ async function resolveRegistrySkill(identifier: string): Promise<Result<{ source
 	}
 
 	if (!response.ok) {
+		if (response.status === 404) {
+			// Extract owner from identifier (remove @ prefix if present)
+			const ownerRaw = owner.startsWith("@") ? owner.slice(1) : owner;
+			return err(
+				new Error(
+					`Skill "${identifier}" not found in the claude-plugins registry.\n\n` +
+						`The skill may not be published yet. Try installing directly from GitHub:\n` +
+						`  gitgud install ${skill} --source "https://github.com/${ownerRaw}/${repo}"\n\n` +
+						`Browse available skills: https://claude-plugins.dev/skills`,
+				),
+			);
+		}
+
 		let details = "";
 		try {
 			const json = (await response.json()) as { error?: string };

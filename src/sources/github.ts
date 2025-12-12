@@ -94,6 +94,41 @@ async function findFirstDirectory(dir: string): Promise<string> {
 	throw new Error(`No directory found in extracted archive at ${dir}`);
 }
 
+/**
+ * Recursively search for SKILL.md files in a directory.
+ * Returns paths to directories containing SKILL.md, sorted by depth (shallowest first).
+ */
+async function findSkillDirs(dir: string, maxDepth = 4): Promise<string[]> {
+	const results: { path: string; depth: number }[] = [];
+
+	async function search(currentDir: string, depth: number): Promise<void> {
+		if (depth > maxDepth) return;
+
+		const skillPath = path.join(currentDir, "SKILL.md");
+		if (existsSync(skillPath)) {
+			results.push({ path: currentDir, depth });
+			return; // Don't search inside skill directories
+		}
+
+		try {
+			const entries = await readdir(currentDir);
+			for (const entry of entries) {
+				if (entry.startsWith(".")) continue; // Skip hidden dirs
+				const fullPath = path.join(currentDir, entry);
+				const s = await stat(fullPath);
+				if (s.isDirectory()) {
+					await search(fullPath, depth + 1);
+				}
+			}
+		} catch {
+			// Ignore permission errors, etc.
+		}
+	}
+
+	await search(dir, 0);
+	return results.sort((a, b) => a.depth - b.depth).map((r) => r.path);
+}
+
 async function downloadGithubSource(gigetSource: string, tempDir: string): Promise<string> {
 	const withoutPrefix = gigetSource.replace(/^github:/, "");
 	const [repoAndPath, refRaw] = withoutPrefix.split("#", 2);
@@ -147,10 +182,33 @@ export async function installFromGithub(
 
 	try {
 		const downloadedDir = await downloadGithubSource(gigetSource, tempDir);
-		const skillDir = path.resolve(downloadedDir);
-		const parsed = parseSkill(skillDir, "local");
+		let skillDir = path.resolve(downloadedDir);
+
+		// Try parsing at root first
+		let parsed = parseSkill(skillDir, "local");
+
+		// If no SKILL.md at root, auto-discover nested skills
 		if (!parsed.ok) {
-			throw parsed.error;
+			const skillDirs = await findSkillDirs(skillDir);
+			if (skillDirs.length === 0) {
+				throw new Error(
+					`No SKILL.md found in repository. Expected at root or in a subdirectory.\n` +
+						`Hint: Use a URL with subpath like: https://github.com/user/repo/tree/main/path/to/skill`,
+				);
+			}
+			if (skillDirs.length > 1) {
+				const relative = skillDirs.map((d) => path.relative(skillDir, d)).join(", ");
+				throw new Error(
+					`Multiple skills found: ${relative}\n` +
+						`Specify which one to install using a URL with subpath.`,
+				);
+			}
+			// Single skill found - use it
+			skillDir = skillDirs[0];
+			parsed = parseSkill(skillDir, "local");
+			if (!parsed.ok) {
+				throw parsed.error;
+			}
 		}
 
 		const skillName = parsed.value.frontmatter.name;
