@@ -8,6 +8,7 @@ import { runPathCommand } from "./commands/path";
 import { searchCommand } from "./commands/search";
 import { show } from "./commands/show";
 import { uninstallCommand } from "./commands/uninstall";
+import { updateCommand } from "./commands/update";
 import type { OutputFormat, Scope } from "./types";
 
 type CliOptions = {
@@ -29,6 +30,7 @@ Commands:
   install <name>
   uninstall <name>
   init
+  update
 
 Options:
   --format     Output format: text|json
@@ -124,6 +126,10 @@ async function dispatch(command: string, args: string[], options: CliOptions): P
 			const name = args[0];
 			const format = options.json ? "json" : "text";
 			await show({ name, format });
+			return;
+		}
+		case "update": {
+			await updateCommand();
 			return;
 		}
 		default:

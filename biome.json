@@ -1,8 +1,5 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.3.7/schema.json",
-	"organizeImports": {
-		"enabled": true
-	},
 	"linter": {
 		"enabled": true,
 		"rules": {
@@ -26,7 +23,9 @@
 		"indentStyle": "tab",
 		"lineWidth": 100
 	},
-	"files": {
-		"ignore": ["dist", "node_modules", ".beads"]
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
 	}
 }

@@ -1,6 +1,6 @@
 {
   "name": "gitgud-skills",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "CLI for managing AI agent skills",
   "keywords": [
     "cli",

@@ -69,6 +69,7 @@ gitgud show pdf
 | `gitgud install <source>` | Install from registry, GitHub, or local |
 | `gitgud uninstall <name>` | Remove a skill |
 | `gitgud init` | Setup and print AGENTS.md snippet |
+| `gitgud update` | Self-update to latest version |
 
 **Options:** `--local`, `--global`, `--json`
 
