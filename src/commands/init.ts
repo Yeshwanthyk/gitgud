@@ -10,21 +10,21 @@ export type InitOptions = {
   scope: Scope;
 };
 
-const AGENTS_SNIPPET = `# gitgud — skills discovery & usage
-#
-# gitgud discovers skills in these directories (highest precedence first):
-#   1) ~/.gitgud/skills
-#   2) ~/.claude/skills
-#   3) <repo>/.gitgud/skills
-#   4) <repo>/.claude/skills
-#
-# Common commands:
-#   gitgud list
-#   gitgud show <name>
-#   gitgud search <query>
-#   gitgud install <name> [--local|--global]
-#   gitgud uninstall <name> [--local|--global]
-#   gitgud init [--local|--global]
+const AGENTS_SNIPPET = `## Skills
+
+This project uses gitgud for AI agent skills. Skills provide specialized instructions for complex tasks.
+
+### How to Use Skills
+
+1. **Discover available skills**: Run \`gitgud list\` to see installed skills with descriptions
+2. **Search for skills**: Run \`gitgud search <term>\` to find skills by keyword
+3. **Load a skill**: Run \`gitgud show <name>\` to load detailed instructions
+
+When a user request matches a skill's description, load it with \`gitgud show <name>\` and follow the instructions. The output includes the skill's base directory for resolving bundled resources (scripts/, references/, assets/).
+
+### Installed Skills
+
+Run \`gitgud list\` to see current skills.
 `;
 
 export async function initCommand(
