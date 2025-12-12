@@ -1,46 +1,26 @@
 # gitgud
 
+[![npm version](https://img.shields.io/npm/v/gitgud-skills.svg)](https://www.npmjs.com/package/gitgud-skills)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 CLI for managing AI agent skills. Multi-source installation, Claude Code compatible.
 
 ## Installation
 
-### Quick Install (Recommended)
-
+**Quick install (recommended)**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yesh/gitgud/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Yeshwanthyk/gitgud/main/install.sh | bash
 ```
-
-This downloads the correct binary for your system and installs to `~/.local/bin`.
-
-### Other Methods
 
 **npx (no install needed)**
 ```bash
 npx gitgud-skills list
-npx gitgud-skills install @anthropics/claude-code/frontend-design
 ```
 
-**bun**
-```bash
-bun install -g gitgud-skills
-```
-
-**npm**
+**npm / bun**
 ```bash
 npm install -g gitgud-skills
-```
-
-**Manual download**
-
-Download the binary for your platform from [releases](https://github.com/Yeshwanthyk/gitgud/releases):
-- `gitgud-darwin-arm64` - macOS Apple Silicon
-- `gitgud-darwin-x64` - macOS Intel
-- `gitgud-linux-x64` - Linux x64
-- `gitgud-linux-arm64` - Linux ARM64
-
-```bash
-chmod +x gitgud-*
-sudo mv gitgud-* /usr/local/bin/gitgud
+bun install -g gitgud-skills
 ```
 
 ## Quick Start
@@ -69,14 +49,14 @@ gitgud show pdf
 
 | Feature | gitgud | claude-plugins | openskills |
 |---------|--------|----------------|------------|
-| Registry install | ✅ | ✅ | ❌ |
-| GitHub install | ✅ | ✅ | ✅ |
-| Local install | ✅ | ❌ | ❌ |
-| Search skills | ✅ | ❌ | ❌ |
-| JSON output | ✅ | ❌ | ❌ |
-| Standalone binary | ✅ | ❌ | ❌ |
-| Update tracking | ✅ | ❌ | ❌ |
-| Claude Code compat | ✅ | ✅ | ✅ |
+| Registry install | Yes | Yes | No |
+| GitHub install | Yes | Yes | Yes |
+| Local install | Yes | No | No |
+| Search skills | Yes | No | No |
+| JSON output | Yes | No | No |
+| Standalone binary | Yes | No | No |
+| Update tracking | Yes | No | No |
+| Claude Code compat | Yes | Yes | Yes |
 
 ## Commands
 
@@ -90,11 +70,7 @@ gitgud show pdf
 | `gitgud uninstall <name>` | Remove a skill |
 | `gitgud init` | Setup and print AGENTS.md snippet |
 
-### Options
-
-- `--local` - Use project-local registry (`.gitgud/skills/`)
-- `--global` - Use global registry (`~/.gitgud/skills/`)
-- `--json` - Output as JSON
+**Options:** `--local`, `--global`, `--json`
 
 ## Install Sources
 
@@ -105,90 +81,35 @@ gitgud install @anthropics/claude-code/frontend-design
 # GitHub shorthand
 gitgud install gh:owner/repo/path/to/skill
 
-# GitHub URL (supports /tree/<ref>/<path>)
+# GitHub URL
 gitgud install https://github.com/owner/repo/tree/main/skills/my-skill
 
 # Local directory
 gitgud install ./my-skill
-gitgud install /absolute/path/to/skill
 ```
 
 ## Directory Structure
 
-**Global** (`~/.gitgud/skills/`)
 ```
-~/.gitgud/skills/
-  pdf/
-    SKILL.md
-    .gitgud-meta.json    # tracks install source
-    scripts/             # optional resources
+~/.gitgud/skills/           # Global gitgud skills
+~/.claude/skills/           # Global Claude Code skills
+.gitgud/skills/             # Project-local gitgud skills
+.claude/skills/             # Project-local Claude Code skills
 ```
 
-**Local** (`.gitgud/skills/`)
-```
-project/
-  .gitgud/skills/
-    my-skill/
-      SKILL.md
-```
-
-### Precedence
-
-Skills are searched in order (later wins):
-1. `.claude/skills/` (local)
-2. `.gitgud/skills/` (local)
-3. `~/.claude/skills/` (global)
-4. `~/.gitgud/skills/` (global)
-
-This means gitgud skills override Claude Code skills of the same name.
+**Precedence** (highest wins): local .claude → local .gitgud → global .claude → global .gitgud
 
 ## For AI Agents
 
 gitgud supports progressive disclosure:
 
-1. **Discover**: `gitgud list` shows available skills
-2. **Search**: `gitgud search <term>` finds relevant skills  
-3. **Load**: `gitgud show <name>` outputs full instructions
+1. `gitgud list` - discover available skills
+2. `gitgud search <term>` - find relevant skills
+3. `gitgud show <name>` - load full instructions
 
-The `show` output includes the skill's base directory:
-```
-Skill: pdf
-Base: /Users/you/.gitgud/skills/pdf
+The `show` output includes the skill's base directory for resolving bundled resources (scripts/, references/, assets/).
 
----
-name: pdf
-description: Extract and manipulate PDFs
----
-[instructions...]
-```
-
-Agents can use the `Base` path to locate bundled resources (`scripts/`, `references/`, `assets/`).
-
-### AGENTS.md Integration
-
-Run `gitgud init` to get a snippet for your AGENTS.md:
-
-```bash
-gitgud init --local   # also creates .gitgud/skills/
-```
-
-## Development
-
-```bash
-git clone https://github.com/Yeshwanthyk/gitgud
-cd gitgud
-bun install
-bun test
-bun run dev  # watch mode
-```
-
-### Building
-
-```bash
-bun run build           # JS bundle
-bun run build:binary    # standalone binary (current platform)
-bun run build:all       # all platform binaries
-```
+Run `gitgud init --local` to get an AGENTS.md snippet.
 
 ## License
 
