@@ -55,13 +55,35 @@ describe("sources/registry", () => {
 		}
 	});
 
-	test("returns an error on non-2xx response", async () => {
+	test("returns a friendly error on 404 response", async () => {
 		globalThis.fetch = mock(() =>
 			Promise.resolve({
 				ok: false,
 				status: 404,
 				statusText: "Not Found",
 				json: () => Promise.resolve({ error: "Skill not found" }),
+			} as unknown as Response),
+		);
+
+		const res = await installFromRegistry({
+			identifier: "@scope/repo/skill",
+			targetDir: "/tmp/skills",
+		});
+
+		expect(res.ok).toBe(false);
+		if (!res.ok) {
+			expect(res.error.message).toContain("not found in the claude-plugins registry");
+			expect(res.error.message).toContain("https://github.com/scope/repo");
+		}
+	});
+
+	test("returns an error on non-2xx response", async () => {
+		globalThis.fetch = mock(() =>
+			Promise.resolve({
+				ok: false,
+				status: 500,
+				statusText: "Internal Server Error",
+				json: () => Promise.resolve({ error: "Server error" }),
 			} as unknown as Response),
 		);
 
