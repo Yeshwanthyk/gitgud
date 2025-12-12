@@ -192,4 +192,4 @@ bun run build:all       # all platform binaries
 
 ## License
 
-MIT
+Apache-2.0

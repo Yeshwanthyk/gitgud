@@ -2,31 +2,45 @@
 
 All notable changes to gitgud will be documented in this file.
 
-## [0.1.0] - 2025-12-11
+## [0.0.1] - 2025-12-11
 
-### ✨ New Features
+Initial release.
 
-- **Skill Discovery**: Find and explore AI agent skills
-  - `gitgud list` - View all installed skills
-  - `gitgud show <skill>` - Display full skill content  
-  - `gitgud search <term>` - Search skills by keyword
-  - `gitgud path <skill>` - Get filesystem path
+### Features
 
-- **Multi-Source Installation**: Install skills from anywhere
-  - Registry: `gitgud install @anthropics/claude-code/frontend-design`
-  - GitHub: `gitgud install gh:user/repo/path/to/skill`
-  - Local: `gitgud install ./my-skill`
+- **Multi-source installation**
+  - Registry: `gitgud install @org/repo/skill` (claude-plugins.dev)
+  - GitHub: `gitgud install gh:owner/repo/path`
+  - Local: `gitgud install ./path/to/skill`
 
-- **Flexible Scoping**: Global and project-local management
-  - Global: `~/.gitgud/skills/`
-  - Local: `.gitgud/skills/` with `--local` flag
+- **Skill discovery**
+  - `gitgud list` - view installed skills
+  - `gitgud show <name>` - display skill with base directory
+  - `gitgud search <term>` - find skills by keyword
+  - `gitgud path <name>` - get skill directory path
 
-- **Claude Code Compatibility**: Works with existing Claude skills
-  - Discovers `~/.claude/skills/` and `.claude/skills/`
-  - Priority: local .claude → local .gitgud → global .claude → global .gitgud
+- **Management**
+  - `gitgud install` / `gitgud uninstall`
+  - `gitgud init` - setup with AGENTS.md snippet
+  - `--local` / `--global` scope flags
+  - `--json` output format
 
-### 🔧 Technical
+- **Claude Code compatible**
+  - Works with `~/.claude/skills/` and `.claude/skills/`
+  - Precedence: local .claude → local .gitgud → global .claude → global .gitgud
 
-- Bun + TypeScript with strict mode
-- 40 tests, Biome linting
-- giget for GitHub cloning
+- **Standalone binaries**
+  - macOS (arm64, x64)
+  - Linux (x64, arm64)
+  - No runtime dependencies
+
+### Installation
+
+```bash
+# Quick install
+curl -fsSL https://raw.githubusercontent.com/yesh/gitgud/main/install.sh | bash
+
+# Or via npm/bun
+npx gitgud-skills
+bun install -g gitgud-skills
+```
