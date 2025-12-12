@@ -32,7 +32,7 @@ npm install -g gitgud-skills
 
 **Manual download**
 
-Download the binary for your platform from [releases](https://github.com/yesh/gitgud/releases):
+Download the binary for your platform from [releases](https://github.com/Yeshwanthyk/gitgud/releases):
 - `gitgud-darwin-arm64` - macOS Apple Silicon
 - `gitgud-darwin-x64` - macOS Intel
 - `gitgud-linux-x64` - Linux x64
@@ -175,7 +175,7 @@ gitgud init --local   # also creates .gitgud/skills/
 ## Development
 
 ```bash
-git clone https://github.com/yesh/gitgud
+git clone https://github.com/Yeshwanthyk/gitgud
 cd gitgud
 bun install
 bun test

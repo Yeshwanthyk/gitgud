@@ -14,7 +14,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yesh/gitgud"
+    "url": "https://github.com/Yeshwanthyk/gitgud.git"
   },
   "type": "module",
   "bin": {

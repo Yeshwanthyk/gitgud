@@ -4,7 +4,7 @@ set -euo pipefail
 # gitgud installer
 # Usage: curl -fsSL https://raw.githubusercontent.com/yesh/gitgud/main/install.sh | bash
 
-REPO="yesh/gitgud"
+REPO="Yeshwanthyk/gitgud"
 INSTALL_DIR="${GITGUD_INSTALL_DIR:-$HOME/.local/bin}"
 
 # Detect OS and architecture
