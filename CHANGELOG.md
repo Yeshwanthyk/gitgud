@@ -4,43 +4,48 @@ All notable changes to gitgud will be documented in this file.
 
 ## [0.0.1] - 2025-12-11
 
-Initial release.
+First release! 🎉
 
-### Features
+### ✨ New Features
 
-- **Multi-source installation**
-  - Registry: `gitgud install @org/repo/skill` (claude-plugins.dev)
-  - GitHub: `gitgud install gh:owner/repo/path`
-  - Local: `gitgud install ./path/to/skill`
+- **Multi-Source Installation**: Install skills from anywhere
+  - Claude-plugins registry: `gitgud install @anthropics/claude-code/frontend-design`
+  - GitHub repos: `gitgud install gh:owner/repo/path/to/skill`
+  - Local directories: `gitgud install ./my-skill`
 
-- **Skill discovery**
-  - `gitgud list` - view installed skills
-  - `gitgud show <name>` - display skill with base directory
-  - `gitgud search <term>` - find skills by keyword
-  - `gitgud path <name>` - get skill directory path
+- **Skill Discovery**: Find and explore your installed skills
+  - `gitgud list` - View all skills with descriptions
+  - `gitgud search <term>` - Search by keyword
+  - `gitgud show <name>` - Load full skill content with base directory
+  - `gitgud path <name>` - Get filesystem path
 
-- **Management**
-  - `gitgud install` / `gitgud uninstall`
-  - `gitgud init` - setup with AGENTS.md snippet
-  - `--local` / `--global` scope flags
-  - `--json` output format
+- **Claude Code Compatible**: Works with existing Claude skills
+  - Reads from `~/.claude/skills/` and `.claude/skills/`
+  - Your gitgud and Claude Code skills work together
 
-- **Claude Code compatible**
-  - Works with `~/.claude/skills/` and `.claude/skills/`
-  - Precedence: local .claude → local .gitgud → global .claude → global .gitgud
+- **Agent-Friendly Output**: Designed for AI agents
+  - `gitgud show` includes base directory for resolving bundled resources
+  - JSON output with `--json` flag for programmatic use
+  - Progressive disclosure pattern: list → search → show
 
-- **Standalone binaries**
-  - macOS (arm64, x64)
-  - Linux (x64, arm64)
-  - No runtime dependencies
+- **Standalone Binaries**: No runtime dependencies
+  - macOS (Apple Silicon & Intel)
+  - Linux (x64 & ARM64)
+  - One-line install: `curl -fsSL https://raw.githubusercontent.com/Yeshwanthyk/gitgud/main/install.sh | bash`
 
-### Installation
+### 📦 Installation
 
 ```bash
-# Quick install
-curl -fsSL https://raw.githubusercontent.com/yesh/gitgud/main/install.sh | bash
+# Quick install (recommended)
+curl -fsSL https://raw.githubusercontent.com/Yeshwanthyk/gitgud/main/install.sh | bash
 
 # Or via npm/bun
-npx gitgud-skills
+npx gitgud-skills list
 bun install -g gitgud-skills
 ```
+
+### 🔧 Technical
+
+- Built with Bun + TypeScript
+- 40 tests with full coverage of core functionality
+- Apache-2.0 license
