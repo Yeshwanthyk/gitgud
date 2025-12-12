@@ -15,18 +15,14 @@ type SkillResponse = {
 	error?: string;
 };
 
-async function resolveRegistrySkill(
-	identifier: string,
-): Promise<Result<{ sourceUrl: string }>> {
+async function resolveRegistrySkill(identifier: string): Promise<Result<{ sourceUrl: string }>> {
 	// Parse identifier: @owner/repo/skill or owner/repo/skill
 	// Note: The API requires the @ to be included in the path
 	const parts = identifier.split("/");
 
 	if (parts.length !== 3) {
 		return err(
-			new Error(
-				`Invalid skill identifier format: ${identifier}. Expected: @owner/repo/skill`,
-			),
+			new Error(`Invalid skill identifier format: ${identifier}. Expected: @owner/repo/skill`),
 		);
 	}
 

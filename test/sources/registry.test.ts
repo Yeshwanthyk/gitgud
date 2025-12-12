@@ -1,4 +1,4 @@
-import { describe, test, expect, mock, beforeEach, afterEach } from "bun:test";
+import { afterEach, describe, expect, mock, test } from "bun:test";
 import { installFromRegistry } from "../../src/sources/registry";
 
 // Mock installFromGithub
@@ -24,7 +24,8 @@ describe("sources/registry", () => {
 				ok: true,
 				json: () =>
 					Promise.resolve({
-						sourceUrl: "anthropics/claude-code/tree/main/plugins/frontend-design/skills/frontend-design",
+						sourceUrl:
+							"anthropics/claude-code/tree/main/plugins/frontend-design/skills/frontend-design",
 					}),
 			} as Response),
 		);

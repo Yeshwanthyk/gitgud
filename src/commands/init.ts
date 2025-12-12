@@ -1,13 +1,10 @@
 import path from "node:path";
 
-import {
-  ensureDir,
-  getGlobalSkillsDir,
-} from "../core/paths";
+import { ensureDir, getGlobalSkillsDir } from "../core/paths";
 import type { Scope } from "../types";
 
 export type InitOptions = {
-  scope: Scope;
+	scope: Scope;
 };
 
 const AGENTS_SNIPPET = `## Skills
@@ -27,25 +24,17 @@ When a user request matches a skill's description, load it with \`gitgud show <n
 Run \`gitgud list\` to see current skills.
 `;
 
-export async function initCommand(
-  _args: string[],
-  options: InitOptions,
-): Promise<void> {
-  const scope = options.scope;
+export async function initCommand(_args: string[], options: InitOptions): Promise<void> {
+	const scope = options.scope;
 
-  const skillsDir =
-    scope === "local"
-      ? path.join(process.cwd(), ".gitgud", "skills")
-      : getGlobalSkillsDir();
+	const skillsDir =
+		scope === "local" ? path.join(process.cwd(), ".gitgud", "skills") : getGlobalSkillsDir();
 
-  ensureDir(skillsDir);
+	ensureDir(skillsDir);
 
-  const targetLabel =
-    scope === "local" ? skillsDir : `global skills dir: ${skillsDir}`;
+	const targetLabel = scope === "local" ? skillsDir : `global skills dir: ${skillsDir}`;
 
-  process.stdout.write(
-    `Initialized gitgud ${targetLabel}\n\n` +
-      "Add this snippet to your AGENTS.md if you want gitgud skills support:\n\n" +
-      `${AGENTS_SNIPPET}\n`,
-  );
+	process.stdout.write(
+		`Initialized gitgud ${targetLabel}\n\nAdd this snippet to your AGENTS.md if you want gitgud skills support:\n\n${AGENTS_SNIPPET}\n`,
+	);
 }

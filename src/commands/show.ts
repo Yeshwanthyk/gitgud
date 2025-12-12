@@ -1,9 +1,9 @@
-import path from "node:path";
 import { readFile } from "node:fs/promises";
+import path from "node:path";
 
-import type { OutputFormat } from "../types";
 import { resolveSkill } from "../core/skills";
 import { formatError, formatSkillDetail } from "../output";
+import type { OutputFormat } from "../types";
 
 export type ShowOptions = {
 	name?: string;
@@ -31,11 +31,8 @@ export async function show(options: ShowOptions): Promise<void> {
 	try {
 		content = await readFile(skillFile, "utf8");
 	} catch (error) {
-		const message =
-			error instanceof Error ? error.message : "Unknown read error";
-		process.stderr.write(
-			`${formatError(`Failed to read SKILL.md: ${message}`, format)}\n`,
-		);
+		const message = error instanceof Error ? error.message : "Unknown read error";
+		process.stderr.write(`${formatError(`Failed to read SKILL.md: ${message}`, format)}\n`);
 		process.exit(1);
 	}
 
