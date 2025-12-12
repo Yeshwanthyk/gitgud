@@ -1,9 +1,8 @@
 import { existsSync } from "node:fs";
-import { cp, mkdir, mkdtemp, rename, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, rename, rm, writeFile, readdir, stat } from "node:fs/promises";
+import { spawn } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
-
-import { downloadTemplate } from "giget";
 
 import { parseSkill } from "../core/skills";
 import type { Result, SkillMeta } from "../types";
@@ -67,6 +66,72 @@ async function moveDir(from: string, to: string): Promise<void> {
   }
 }
 
+function runTarExtract(archivePath: string, extractDir: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn("tar", ["-xzf", archivePath, "-C", extractDir], {
+      stdio: "pipe",
+    });
+    let stderr = "";
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk.toString();
+    });
+    child.on("error", (error) => reject(error));
+    child.on("close", (code) => {
+      if (code === 0) return resolve();
+      reject(new Error(`Failed to extract archive (tar exit ${code}): ${stderr.trim()}`));
+    });
+  });
+}
+
+async function findFirstDirectory(dir: string): Promise<string> {
+  const entries = await readdir(dir);
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry);
+    const s = await stat(fullPath);
+    if (s.isDirectory()) return fullPath;
+  }
+  throw new Error(`No directory found in extracted archive at ${dir}`);
+}
+
+async function downloadGithubSource(
+  gigetSource: string,
+  tempDir: string,
+): Promise<string> {
+  const withoutPrefix = gigetSource.replace(/^github:/, "");
+  const [repoAndPath, refRaw] = withoutPrefix.split("#", 2);
+  const parts = repoAndPath.split("/").filter(Boolean);
+  if (parts.length < 2) {
+    throw new Error(`Invalid GitHub source: ${gigetSource}`);
+  }
+  const owner = parts[0];
+  const repo = parts[1];
+  const subdir = parts.slice(2).join("/");
+  const ref = refRaw?.trim() || "HEAD";
+
+  const tarUrl = `https://codeload.github.com/${owner}/${repo}/tar.gz/${ref}`;
+  const res = await fetch(tarUrl, {
+    headers: { "User-Agent": "gitgud" },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to download ${tarUrl}: ${res.status} ${res.statusText}`);
+  }
+
+  const archivePath = path.join(tempDir, "repo.tgz");
+  const ab = await res.arrayBuffer();
+  await writeFile(archivePath, new Uint8Array(ab));
+
+  const extractDir = path.join(tempDir, "extract");
+  await mkdir(extractDir, { recursive: true });
+  await runTarExtract(archivePath, extractDir);
+
+  const rootDir = await findFirstDirectory(extractDir);
+  const finalDir = subdir ? path.join(rootDir, subdir) : rootDir;
+  if (!existsSync(finalDir)) {
+    throw new Error(`Subpath not found in repo: ${subdir}`);
+  }
+  return finalDir;
+}
+
 export async function installFromGithub(
   options: InstallFromGithubOptions,
 ): Promise<Result<string>> {
@@ -83,11 +148,7 @@ export async function installFromGithub(
   };
 
   try {
-    const { dir: downloadedDir } = await downloadTemplate(gigetSource, {
-      dir: tempDir,
-      forceClean: true,
-    });
-
+    const downloadedDir = await downloadGithubSource(gigetSource, tempDir);
     const skillDir = path.resolve(downloadedDir);
     const parsed = parseSkill(skillDir, "local");
     if (!parsed.ok) {
