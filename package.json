@@ -2,14 +2,7 @@
 	"name": "gitgud-skills",
 	"version": "0.0.4",
 	"description": "CLI for managing AI agent skills",
-	"keywords": [
-		"cli",
-		"ai",
-		"agents",
-		"skills",
-		"claude",
-		"claude-code"
-	],
+	"keywords": ["cli", "ai", "agents", "skills", "claude", "claude-code"],
 	"author": "yesh",
 	"license": "Apache-2.0",
 	"repository": {
@@ -20,9 +13,7 @@
 	"bin": {
 		"gitgud": "./dist/cli.js"
 	},
-	"files": [
-		"dist/cli.js"
-	],
+	"files": ["dist/cli.js"],
 	"scripts": {
 		"dev": "bun --watch src/cli.ts",
 		"build": "bun build src/cli.ts --outdir dist --target bun --external giget --external yaml",
@@ -35,13 +26,15 @@
 		"build:darwin-arm64": "bun build src/cli.ts --compile --target=bun-darwin-arm64 --outfile dist/gitgud-darwin-arm64",
 		"build:darwin-x64": "bun build src/cli.ts --compile --target=bun-darwin-x64 --outfile dist/gitgud-darwin-x64",
 		"build:linux-x64": "bun build src/cli.ts --compile --target=bun-linux-x64 --outfile dist/gitgud-linux-x64",
-		"build:linux-arm64": "bun build src/cli.ts --compile --target=bun-linux-arm64 --outfile dist/gitgud-linux-arm64"
+		"build:linux-arm64": "bun build src/cli.ts --compile --target=bun-linux-arm64 --outfile dist/gitgud-linux-arm64",
+		"prepare": "lefthook install"
 	},
 	"dependencies": {
 		"yaml": "^2.0.0"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "^1.9.0",
 		"@types/bun": "^1.3.0",
-		"@biomejs/biome": "^1.9.0"
+		"lefthook": "^2.0.11"
 	}
 }

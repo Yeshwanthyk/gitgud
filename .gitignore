@@ -44,3 +44,5 @@ plan.md
 .gitgud/
 .cursor/
 .beads/
+.bun-build
+*.bun-build

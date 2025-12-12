@@ -192,15 +192,14 @@ export async function installFromGithub(
 			const skillDirs = await findSkillDirs(skillDir);
 			if (skillDirs.length === 0) {
 				throw new Error(
-					`No SKILL.md found in repository. Expected at root or in a subdirectory.\n` +
-						`Hint: Use a URL with subpath like: https://github.com/user/repo/tree/main/path/to/skill`,
+					"No SKILL.md found in repository. Expected at root or in a subdirectory.\n" +
+						"Hint: Use a URL with subpath like: https://github.com/user/repo/tree/main/path/to/skill",
 				);
 			}
 			if (skillDirs.length > 1) {
 				const relative = skillDirs.map((d) => path.relative(skillDir, d)).join(", ");
 				throw new Error(
-					`Multiple skills found: ${relative}\n` +
-						`Specify which one to install using a URL with subpath.`,
+					`Multiple skills found: ${relative}\nSpecify which one to install using a URL with subpath.`,
 				);
 			}
 			// Single skill found - use it
