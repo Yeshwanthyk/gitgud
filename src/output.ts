@@ -14,12 +14,13 @@ export function formatSkillDetail(
   skill: Skill,
   content: string,
   format: OutputFormat,
+  basePath: string = skill.path,
 ): string {
   if (format === "json") {
-    return JSON.stringify({ ...skill, content }, null, 2);
+    return JSON.stringify({ ...skill, base: basePath, content }, null, 2);
   }
 
-  return content;
+  return `Skill: ${skill.name}\nBase: ${basePath}\n\n---\n${content}`;
 }
 
 export function formatError(message: string, format: OutputFormat): string {

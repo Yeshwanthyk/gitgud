@@ -45,9 +45,11 @@ describe("formatSkillList", () => {
 });
 
 describe("formatSkillDetail", () => {
-  it("returns raw content for text", () => {
+  it("includes skill name and base for text", () => {
     const skill = makeSkill();
-    expect(formatSkillDetail(skill, "hello", "text")).toBe("hello");
+    expect(formatSkillDetail(skill, "hello", "text")).toBe(
+      "Skill: foo\nBase: /tmp/foo\n\n---\nhello",
+    );
   });
 
   it("includes skill metadata and content for json", () => {
@@ -58,6 +60,7 @@ describe("formatSkillDetail", () => {
     expect(parsed.scope).toBe("global");
     expect(parsed.content).toBe("content here");
     expect(parsed.path).toBe("/tmp/foo");
+    expect((parsed as Skill & { base: string }).base).toBe("/tmp/foo");
   });
 });
 
@@ -73,4 +76,3 @@ describe("formatError", () => {
     expect(parsed).toEqual({ error: "boom" });
   });
 });
-

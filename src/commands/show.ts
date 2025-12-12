@@ -39,5 +39,5 @@ export async function show(options: ShowOptions): Promise<void> {
 		process.exit(1);
 	}
 
-	process.stdout.write(`${formatSkillDetail(skill, content, format)}\n`);
+	process.stdout.write(`${formatSkillDetail(skill, content, format, skill.path)}\n`);
 }
