@@ -94,11 +94,16 @@ export function getAllSkills(): Skill[] {
 	const globalClaudeDir = getClaudeSkillsDir();
 	const globalGitgudDir = getGlobalSkillsDir();
 
+	// Precedence order (last wins in loop, so list lowest-to-highest):
+	// 4. global .claude - Claude Code defaults (lowest)
+	// 3. local .claude - project Claude skills
+	// 2. global .gitgud - user overrides
+	// 1. local .gitgud - project overrides (highest)
 	const dirs: Array<{ dir: string | null; scope: Scope }> = [
-		{ dir: localClaudeDir, scope: "local" },
-		{ dir: localGitgudDir, scope: "local" },
 		{ dir: globalClaudeDir, scope: "global" },
+		{ dir: localClaudeDir, scope: "local" },
 		{ dir: globalGitgudDir, scope: "global" },
+		{ dir: localGitgudDir, scope: "local" },
 	];
 
 	const merged = new Map<string, Skill>();
@@ -121,14 +126,19 @@ export function resolveSkill(name: string): Result<Skill> {
 	const globalClaudeDir = getClaudeSkillsDir();
 	const globalGitgudDir = getGlobalSkillsDir();
 
+	// Precedence order (first match wins, so list highest-to-lowest):
+	// 1. local .gitgud - project overrides (highest)
+	// 2. global .gitgud - user overrides
+	// 3. local .claude - project Claude skills
+	// 4. global .claude - Claude Code defaults (lowest)
 	const dirs: Array<{ dir: string | null; scope: Scope }> = [
-		{ dir: localClaudeDir, scope: "local" },
 		{ dir: localGitgudDir, scope: "local" },
-		{ dir: globalClaudeDir, scope: "global" },
 		{ dir: globalGitgudDir, scope: "global" },
+		{ dir: localClaudeDir, scope: "local" },
+		{ dir: globalClaudeDir, scope: "global" },
 	];
 
-	for (let i = dirs.length - 1; i >= 0; i -= 1) {
+	for (let i = 0; i < dirs.length; i += 1) {
 		const { dir, scope } = dirs[i];
 		if (!dir) continue;
 		const skillDir = path.join(dir, name);

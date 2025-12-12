@@ -104,14 +104,16 @@ describe("core/skills", () => {
 		const minimal = all.find((s) => s.name === "minimal-skill");
 		const valid = all.find((s) => s.name === "valid-skill");
 
-		expect(minimal?.scope).toBe("global");
+		// local .gitgud takes priority over global .gitgud
+		expect(minimal?.scope).toBe("local");
 		expect(normalize(minimal?.path ?? "")).toBe(
-			normalize(path.resolve(globalSkillsDir, "minimal-skill")),
+			normalize(path.resolve(localSkillsDir, "minimal-skill")),
 		);
+		// valid-skill only in global
 		expect(valid?.scope).toBe("global");
 	});
 
-	test("resolveSkill checks dirs with later shadowing", () => {
+	test("resolveSkill checks dirs with local taking priority", () => {
 		const globalSkillsDir = path.join(tmpRoot, ".gitgud", "skills");
 		ensureDir(globalSkillsDir);
 		copyFixture("minimal-skill", path.join(globalSkillsDir, "minimal-skill"));
@@ -124,12 +126,14 @@ describe("core/skills", () => {
 
 		process.chdir(projectRoot);
 
+		// local .gitgud takes priority over global .gitgud
 		const minimal = resolveSkill("minimal-skill");
 		expect(minimal.ok).toBe(true);
 		if (minimal.ok) {
-			expect(minimal.value.scope).toBe("global");
+			expect(minimal.value.scope).toBe("local");
 		}
 
+		// valid-skill only exists in global, so it comes from there
 		const valid = resolveSkill("valid-skill");
 		expect(valid.ok).toBe(true);
 		if (valid.ok) {
@@ -143,7 +147,7 @@ describe("core/skills", () => {
 		}
 	});
 
-	test("claude skills dirs participate in precedence order", () => {
+	test("precedence: local .gitgud > global .gitgud > local .claude > global .claude", () => {
 		const globalClaudeSkillsDir = path.join(tmpRoot, ".claude", "skills");
 		ensureDir(globalClaudeSkillsDir);
 		copyFixture("minimal-skill", path.join(globalClaudeSkillsDir, "minimal-skill"));
@@ -163,19 +167,20 @@ describe("core/skills", () => {
 
 		process.chdir(projectRoot);
 
+		// local .gitgud has highest priority
 		const all = getAllSkills();
 		const minimal = all.find((s) => s.name === "minimal-skill");
-		expect(minimal?.scope).toBe("global");
+		expect(minimal?.scope).toBe("local");
 		expect(normalize(minimal?.path ?? "")).toBe(
-			normalize(path.resolve(globalGitgudSkillsDir, "minimal-skill")),
+			normalize(path.resolve(localGitgudSkillsDir, "minimal-skill")),
 		);
 
 		const resolved = resolveSkill("minimal-skill");
 		expect(resolved.ok).toBe(true);
 		if (resolved.ok) {
-			expect(resolved.value.scope).toBe("global");
+			expect(resolved.value.scope).toBe("local");
 			expect(normalize(resolved.value.path)).toBe(
-				normalize(path.resolve(globalGitgudSkillsDir, "minimal-skill")),
+				normalize(path.resolve(localGitgudSkillsDir, "minimal-skill")),
 			);
 		}
 	});

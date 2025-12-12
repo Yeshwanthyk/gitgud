@@ -97,7 +97,7 @@ gitgud install ./my-skill
 .claude/skills/             # Project-local Claude Code skills
 ```
 
-**Precedence** (highest wins): local .claude → local .gitgud → global .claude → global .gitgud
+**Precedence** (highest wins): local .gitgud → global .gitgud → local .claude → global .claude
 
 ## For AI Agents
 
