@@ -4,7 +4,9 @@ export interface SkillFrontmatter {
 	name: string;
 	description: string;
 	license?: string;
-	triggers?: string[];
+	compatibility?: string;
+	allowedTools?: string[];
+	metadata?: Record<string, string>;
 }
 
 export interface Skill {
