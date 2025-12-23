@@ -2,6 +2,14 @@
 
 All notable changes to gitgud will be documented in this file.
 
+## [0.0.5] - 2025-12-19
+
+### Added
+
+- **Agent Skills spec validation**: Enforces the official Claude Agent Skills rules for `SKILL.md` frontmatter (lowercase slugs, ≤1024 character descriptions, no reserved words or HTML, unknown keys blocked).
+- **Allowed tools & metadata parsing**: Supports the optional `allowed-tools` (string or array) and `metadata` mappings so skills can declare required tools and custom attributes.
+- **Docs & init snippet refresh**: README and `gitgud init` now explain how to keep AGENTS.md short, load skills via `gitgud show`, and treat SKILL.md content as untrusted instructions per the standard.
+
 ## [0.0.4] - 2025-12-12
 
 ### Added

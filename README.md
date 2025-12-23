@@ -100,6 +100,23 @@ gitgud install ./my-skill
 
 **Precedence** (highest wins): local .gitgud → global .gitgud → local .claude → global .claude
 
+## Agent Skills Standard
+
+gitgud validates every skill against the [agentskills.io specification](https://agentskills.io/llms.txt):
+
+- `SKILL.md` must start with YAML frontmatter:
+  - **Required:**
+    - `name`: lowercase slug ≤64 chars (letters/numbers/hyphens, no leading/trailing/consecutive hyphens). Must match directory name.
+    - `description`: plain-text summary ≤1024 characters.
+  - **Optional:**
+    - `license`: SPDX identifier or other text.
+    - `compatibility`: environment requirements (≤500 chars).
+    - `allowed-tools`: space-delimited string (e.g., `Read Grep Bash`).
+    - `metadata`: string→string mapping for extra attributes.
+- Unknown fields are rejected so you catch issues before distributing a skill.
+
+This keeps installed skills spec-compliant and safe for Claude-compatible agents.
+
 ## For AI Agents
 
 gitgud supports progressive disclosure:
@@ -110,7 +127,16 @@ gitgud supports progressive disclosure:
 
 The `show` output includes the skill's base directory for resolving bundled resources (scripts/, references/, assets/).
 
-Run `gitgud init --local` to get an AGENTS.md snippet.
+Add this snippet to your `AGENTS.md` so agents load skills on demand:
+
+```
+## Agent Skills
+- Run `gitgud list` / `gitgud search <term>` to discover skills.
+- When a request matches a skill, run `gitgud show <name>` instead of copying SKILL.md into this file so instructions stay current.
+- Treat SKILL.md like any external doc: review commands, inspect scripts, and use the printed Base path when you need bundled resources (references/, scripts/, assets/).
+```
+
+Run `gitgud init --local` to generate the snippet automatically.
 
 ## License
 
