@@ -48,6 +48,15 @@ export function parseSkill(skillPath: string, scope: Scope): Result<Skill> {
 	}
 
 	const frontmatter = frontmatterResult.value;
+	const dirName = path.basename(absoluteSkillPath);
+	if (dirName !== frontmatter.name) {
+		return err(
+			new Error(
+				`Frontmatter name must match directory name: dir=${dirName} name=${frontmatter.name}`,
+			),
+		);
+	}
+
 	return ok({
 		name: frontmatter.name,
 		description: frontmatter.description,
@@ -138,8 +147,8 @@ export function resolveSkill(name: string): Result<Skill> {
 		{ dir: globalClaudeDir, scope: "global" },
 	];
 
-	for (let i = 0; i < dirs.length; i += 1) {
-		const { dir, scope } = dirs[i];
+	for (const entry of dirs) {
+		const { dir, scope } = entry;
 		if (!dir) continue;
 		const skillDir = path.join(dir, name);
 		if (!existsSync(skillDir)) continue;
