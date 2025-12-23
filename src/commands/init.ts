@@ -7,22 +7,15 @@ export type InitOptions = {
 	scope: Scope;
 };
 
-const AGENTS_SNIPPET = `## Skills
+const AGENTS_SNIPPET = `## Agent Skills
 
-This project uses gitgud for AI agent skills. Skills provide specialized instructions for complex tasks.
+This project stores Claude-compatible Agent Skills in gitgud.
 
-### How to Use Skills
+- Run \`gitgud list\` or \`gitgud search <term>\` to discover installed skills.
+- When a request matches a skill, run \`gitgud show <name>\` to load the SKILL.md directly. Do not copy skill content into AGENTS.md—load it only when needed so instructions stay fresh.
+- Treat SKILL.md content like any external doc: review the steps, confirm scripts/resources before running them, and use the printed \`Base:\` path to access bundled files (references/, scripts/, assets/).
 
-1. **Discover available skills**: Run \`gitgud list\` to see installed skills with descriptions
-2. **Search for skills**: Run \`gitgud search <term>\` to find skills by keyword
-3. **Load a skill**: Run \`gitgud show <name>\` to load detailed instructions
-
-When a user request matches a skill's description, load it with \`gitgud show <name>\` and follow the instructions. The output includes the skill's base directory for resolving bundled resources (scripts/, references/, assets/).
-
-### Installed Skills
-
-Run \`gitgud list\` to see current skills.
-`;
+Skills follow the official Agent Skills standard, so loading them with gitgud keeps this AGENT short while still giving you detailed, task-specific guidance on demand.`;
 
 export async function initCommand(_args: string[], options: InitOptions): Promise<void> {
 	const scope = options.scope;
