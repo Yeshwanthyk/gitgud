@@ -25,7 +25,7 @@ describe("sources/local", () => {
 	});
 
 	test("installs a valid local skill and writes meta", () => {
-		const sourceDir = path.join(tmpRoot, "source-skill");
+		const sourceDir = path.join(tmpRoot, "valid-skill");
 		copyFixture("valid-skill", sourceDir);
 
 		const targetDir = path.join(tmpRoot, "skills");
@@ -77,7 +77,7 @@ describe("sources/local", () => {
 	});
 
 	test("errors when target already has same skill", () => {
-		const sourceDir = path.join(tmpRoot, "source-skill");
+		const sourceDir = path.join(tmpRoot, "valid-skill");
 		copyFixture("valid-skill", sourceDir);
 
 		const targetDir = path.join(tmpRoot, "skills");

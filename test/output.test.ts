@@ -29,8 +29,8 @@ describe("formatSkillList", () => {
 		const output = formatSkillList(skills, "json");
 		const parsed = JSON.parse(output) as Skill[];
 		expect(parsed).toHaveLength(1);
-		expect(parsed[0].name).toBe("a");
-		expect(parsed[0].scope).toBe("local");
+		expect(parsed[0]?.name).toBe("a");
+		expect(parsed[0]?.scope).toBe("local");
 	});
 
 	it("returns empty string for empty text list", () => {
@@ -49,12 +49,12 @@ describe("formatSkillDetail", () => {
 	it("includes skill metadata and content for json", () => {
 		const skill = makeSkill({ name: "bar", scope: "global" });
 		const output = formatSkillDetail(skill, "content here", "json");
-		const parsed = JSON.parse(output) as Skill & { content: string };
+		const parsed = JSON.parse(output) as Skill & { content: string; base: string };
 		expect(parsed.name).toBe("bar");
 		expect(parsed.scope).toBe("global");
 		expect(parsed.content).toBe("content here");
 		expect(parsed.path).toBe("/tmp/foo");
-		expect((parsed as Skill & { base: string }).base).toBe("/tmp/foo");
+		expect(parsed.base).toBe("/tmp/foo");
 	});
 });
 

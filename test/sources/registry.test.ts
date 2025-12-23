@@ -28,7 +28,7 @@ describe("sources/registry", () => {
 							"anthropics/claude-code/tree/main/plugins/frontend-design/skills/frontend-design",
 					}),
 			} as Response),
-		);
+		) as unknown as typeof fetch;
 
 		const res = await installFromRegistry({
 			identifier: "@anthropics/claude-code/frontend-design",
@@ -42,7 +42,9 @@ describe("sources/registry", () => {
 	});
 
 	test("returns a friendly error on network failure", async () => {
-		globalThis.fetch = mock(() => Promise.reject(new Error("Network down")));
+		globalThis.fetch = mock(() =>
+			Promise.reject(new Error("Network down")),
+		) as unknown as typeof fetch;
 
 		const res = await installFromRegistry({
 			identifier: "@scope/repo/skill",
@@ -63,7 +65,7 @@ describe("sources/registry", () => {
 				statusText: "Not Found",
 				json: () => Promise.resolve({ error: "Skill not found" }),
 			} as unknown as Response),
-		);
+		) as unknown as typeof fetch;
 
 		const res = await installFromRegistry({
 			identifier: "@scope/repo/skill",
@@ -85,7 +87,7 @@ describe("sources/registry", () => {
 				statusText: "Internal Server Error",
 				json: () => Promise.resolve({ error: "Server error" }),
 			} as unknown as Response),
-		);
+		) as unknown as typeof fetch;
 
 		const res = await installFromRegistry({
 			identifier: "@scope/repo/skill",

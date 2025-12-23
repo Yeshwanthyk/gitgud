@@ -2,9 +2,11 @@
 name: valid-skill
 description: A fully specified skill for tests.
 license: MIT
-triggers:
-  - git
-  - gud
+compatibility: Requires git
+allowed-tools: Read Grep
+metadata:
+  category: git
+  reviewer: qa
 ---
 
 # Valid Skill

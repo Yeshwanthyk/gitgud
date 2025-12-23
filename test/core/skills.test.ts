@@ -28,19 +28,23 @@ describe("core/skills", () => {
 
 	beforeEach(() => {
 		originalCwd = process.cwd();
-		originalHome = process.env.HOME;
+		// biome-ignore lint/complexity/useLiteralKeys: TS requires bracket notation
+		originalHome = process.env["HOME"];
 		tmpRoot = mkdtempSync(path.join(os.tmpdir(), "gitgud-skills-"));
 
 		// Isolate homedir for global paths.
-		process.env.HOME = tmpRoot;
+		// biome-ignore lint/complexity/useLiteralKeys: TS requires bracket notation
+		process.env["HOME"] = tmpRoot;
 	});
 
 	afterEach(() => {
 		process.chdir(originalCwd);
 		if (originalHome === undefined) {
-			process.env.HOME = undefined;
+			// biome-ignore lint/complexity/useLiteralKeys: TS requires bracket notation
+			process.env["HOME"] = undefined;
 		} else {
-			process.env.HOME = originalHome;
+			// biome-ignore lint/complexity/useLiteralKeys: TS requires bracket notation
+			process.env["HOME"] = originalHome;
 		}
 		rmSync(tmpRoot, { recursive: true, force: true });
 	});
@@ -56,7 +60,8 @@ describe("core/skills", () => {
 			expect(result.value.description).toBe("A fully specified skill for tests.");
 			expect(result.value.scope).toBe("global");
 			expect(result.value.path).toBe(path.resolve(dir));
-			expect(result.value.frontmatter.triggers).toEqual(["git", "gud"]);
+			expect(result.value.frontmatter.allowedTools).toEqual(["Read", "Grep"]);
+			expect(result.value.frontmatter.compatibility).toBe("Requires git");
 		}
 	});
 
@@ -72,6 +77,20 @@ describe("core/skills", () => {
 		const empty = path.join(tmpRoot, "sample");
 		copyFixture("sample-skill", empty);
 		expect(parseSkill(empty, "global").ok).toBe(false);
+	});
+
+	test("parseSkill errors when directory name mismatches frontmatter name", () => {
+		// Copy valid-skill to wrong-name directory
+		const wrongDir = path.join(tmpRoot, "wrong-name");
+		copyFixture("valid-skill", wrongDir);
+
+		const result = parseSkill(wrongDir, "global");
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
+			expect(result.error.message).toContain("must match directory name");
+			expect(result.error.message).toContain("wrong-name");
+			expect(result.error.message).toContain("valid-skill");
+		}
 	});
 
 	test("scanSkillsDir returns only valid skills", () => {

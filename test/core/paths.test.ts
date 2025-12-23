@@ -36,7 +36,8 @@ describe("core/paths", () => {
 	});
 
 	test("getGlobalDir and getGlobalSkillsDir", () => {
-		const home = process.env.HOME || os.homedir();
+		// biome-ignore lint/complexity/useLiteralKeys: TS requires bracket notation
+		const home = process.env["HOME"] || os.homedir();
 		expect(getGlobalDir()).toBe(path.join(home, ".gitgud"));
 		expect(getGlobalSkillsDir()).toBe(path.join(home, ".gitgud", "skills"));
 	});
