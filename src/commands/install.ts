@@ -9,7 +9,7 @@ import { installFromRegistry } from "../sources/registry";
 import type { OutputFormat } from "../types";
 
 export type InstallOptions = {
-	source?: string;
+	source?: string | undefined;
 	local: boolean;
 	format: OutputFormat;
 };

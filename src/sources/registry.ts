@@ -26,7 +26,7 @@ async function resolveRegistrySkill(identifier: string): Promise<Result<{ source
 		);
 	}
 
-	const [owner, repo, skill] = parts;
+	const [owner, repo, skill] = parts as [string, string, string];
 
 	// Use the /api/skills/ endpoint (same as claude-plugins CLI)
 	const endpoint = `https://api.claude-plugins.dev/api/skills/${owner}/${repo}/${skill}`;
@@ -90,7 +90,7 @@ function normalizeGithubPath(sourceUrl: string): string {
 	// Handle full GitHub URLs
 	if (path.includes("github.com")) {
 		const match = path.match(/github\.com\/(.+)/);
-		if (match) {
+		if (match?.[1]) {
 			path = match[1];
 		}
 	}

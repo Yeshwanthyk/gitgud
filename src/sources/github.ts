@@ -13,7 +13,7 @@ const err = <T = never>(error: Error): Result<T> => ({ ok: false, error });
 
 export type InstallFromGithubOptions = {
 	url: string;
-	subpath?: string;
+	subpath?: string | undefined;
 	targetDir: string;
 };
 
@@ -29,7 +29,7 @@ function normalizeGithubSource(
 
 	// If already in giget format, keep provider prefix.
 	if (/^[a-z]+:/.test(trimmed) && !trimmed.startsWith("http")) {
-		const [base, ref] = trimmed.split("#", 2);
+		const [base, ref] = trimmed.split("#", 2) as [string, string | undefined];
 		const baseWithSubpath = subpath ? `${base}/${subpath}` : base;
 		const reconstructed = ref ? `${baseWithSubpath}#${ref}` : baseWithSubpath;
 		return ok({ gigetSource: reconstructed, metaSource: reconstructed });
@@ -131,13 +131,13 @@ async function findSkillDirs(dir: string, maxDepth = 4): Promise<string[]> {
 
 async function downloadGithubSource(gigetSource: string, tempDir: string): Promise<string> {
 	const withoutPrefix = gigetSource.replace(/^github:/, "");
-	const [repoAndPath, refRaw] = withoutPrefix.split("#", 2);
+	const [repoAndPath, refRaw] = withoutPrefix.split("#", 2) as [string, string | undefined];
 	const parts = repoAndPath.split("/").filter(Boolean);
 	if (parts.length < 2) {
 		throw new Error(`Invalid GitHub source: ${gigetSource}`);
 	}
-	const owner = parts[0];
-	const repo = parts[1];
+	const owner = parts[0] as string;
+	const repo = parts[1] as string;
 	const subdir = parts.slice(2).join("/");
 	const ref = refRaw?.trim() || "HEAD";
 
@@ -203,7 +203,7 @@ export async function installFromGithub(
 				);
 			}
 			// Single skill found - use it
-			skillDir = skillDirs[0];
+			skillDir = skillDirs[0] as string;
 			parsed = parseSkill(skillDir, "local");
 			if (!parsed.ok) {
 				throw parsed.error;

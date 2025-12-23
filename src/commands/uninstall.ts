@@ -6,7 +6,7 @@ import { formatError } from "../output";
 import type { OutputFormat } from "../types";
 
 export type UninstallOptions = {
-	name?: string;
+	name?: string | undefined;
 	local: boolean;
 	format: OutputFormat;
 };

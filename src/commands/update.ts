@@ -55,7 +55,7 @@ function compareVersions(current: string, latest: string): number {
 }
 
 function getCurrentBinaryPath(): string {
-	const binaryPath = process.argv[0];
+	const binaryPath = process.argv[0] ?? "";
 
 	if (binaryPath.includes("bun") || binaryPath.includes("node")) {
 		throw new Error(
@@ -76,7 +76,7 @@ export async function updateCommand(): Promise<void> {
 		process.exit(1);
 	}
 
-	const release: Release = await response.json();
+	const release = (await response.json()) as Release;
 	const latestVersion = release.tag_name;
 
 	console.log(`Latest version:  ${latestVersion}`);

@@ -35,7 +35,7 @@ async function searchSkill(skill: Skill, keywordLower: string): Promise<SearchRe
 		const lines = content.split(/\r?\n/);
 		for (let i = 0; i < lines.length; i += 1) {
 			const lineText = lines[i];
-			if (lineText.toLowerCase().includes(keywordLower)) {
+			if (lineText?.toLowerCase().includes(keywordLower)) {
 				matches.push({ line: i + 1, text: lineText });
 				if (matches.length >= MAX_MATCHES_PER_SKILL) break;
 			}

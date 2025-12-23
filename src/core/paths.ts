@@ -5,12 +5,14 @@ import path from "node:path";
 import type { Scope } from "../types";
 
 export function getGlobalDir(): string {
-	const home = process.env.HOME || os.homedir();
+	// biome-ignore lint/complexity/useLiteralKeys: TS requires bracket notation for index signatures
+	const home = process.env["HOME"] || os.homedir();
 	return path.join(home, ".gitgud");
 }
 
 export function getClaudeSkillsDir(): string {
-	const home = process.env.HOME || os.homedir();
+	// biome-ignore lint/complexity/useLiteralKeys: TS requires bracket notation for index signatures
+	const home = process.env["HOME"] || os.homedir();
 	return path.join(home, ".claude", "skills");
 }
 

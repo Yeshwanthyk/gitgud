@@ -3,7 +3,7 @@ import { formatError } from "../output";
 import type { OutputFormat } from "../types";
 
 export type PathCommandOptions = {
-	name?: string;
+	name?: string | undefined;
 	format: OutputFormat;
 };
 

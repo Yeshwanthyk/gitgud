@@ -6,7 +6,7 @@ import { formatError, formatSkillDetail } from "../output";
 import type { OutputFormat } from "../types";
 
 export type ShowOptions = {
-	name?: string;
+	name?: string | undefined;
 	format: OutputFormat;
 };
 

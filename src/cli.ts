@@ -13,11 +13,11 @@ import type { OutputFormat, Scope } from "./types";
 
 type CliOptions = {
 	json: boolean;
-	format?: OutputFormat;
+	format?: OutputFormat | undefined;
 	local: boolean;
 	global: boolean;
-	name?: string;
-	source?: string;
+	name?: string | undefined;
+	source?: string | undefined;
 };
 
 const USAGE = `gitgud <command> [args] [options]
