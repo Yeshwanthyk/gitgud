@@ -27,6 +27,6 @@ export type InstallSource =
 	| { type: "github"; repo: string; subdir?: string; ref?: string }
 	| { type: "registry"; package: string; version?: string };
 
-export type OutputFormat = "text" | "json";
+export type OutputFormat = "text" | "json" | "robot";
 
 export type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E };

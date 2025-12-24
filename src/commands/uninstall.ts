@@ -6,13 +6,12 @@ import { formatError } from "../output";
 import type { OutputFormat } from "../types";
 
 export type UninstallOptions = {
-	name?: string | undefined;
 	local: boolean;
 	format: OutputFormat;
 };
 
 export function uninstallCommand(args: string[], options: UninstallOptions): void {
-	const name = options.name ?? args[0];
+	const name = args[0];
 	if (!name) {
 		process.stderr.write(`${formatError("Missing skill name.", options.format)}\n`);
 		process.exit(1);

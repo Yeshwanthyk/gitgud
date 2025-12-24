@@ -4,7 +4,6 @@ import { parseArgs } from "node:util";
 import { initCommand } from "./commands/init";
 import { installCommand } from "./commands/install";
 import { listCommand } from "./commands/list";
-import { runPathCommand } from "./commands/path";
 import { searchCommand } from "./commands/search";
 import { show } from "./commands/show";
 import { uninstallCommand } from "./commands/uninstall";
@@ -13,10 +12,10 @@ import type { OutputFormat, Scope } from "./types";
 
 type CliOptions = {
 	json: boolean;
+	robot: boolean;
 	format?: OutputFormat | undefined;
 	local: boolean;
 	global: boolean;
-	name?: string | undefined;
 	source?: string | undefined;
 };
 
@@ -25,7 +24,6 @@ const USAGE = `gitgud <command> [args] [options]
 Commands:
   list
   show <name>
-  path <name>
   search <query>
   install <name>
   uninstall <name>
@@ -33,11 +31,11 @@ Commands:
   update
 
 Options:
-  --format     Output format: text|json
+  --format     Output format: text|json|robot
   --json       Output JSON
+  --robot      Robot-friendly output (TSV for list, raw content for show)
   --local      Use local registry
   --global     Use global registry
-  --name       Skill name (for path)
   --source     Install source (for install)
   -h, --help   Show help
 `;
@@ -53,9 +51,9 @@ function parseCli(argv: string[]) {
 		options: {
 			format: { type: "string" },
 			json: { type: "boolean" },
+			robot: { type: "boolean" },
 			local: { type: "boolean" },
 			global: { type: "boolean" },
-			name: { type: "string" },
 			source: { type: "string" },
 			help: { type: "boolean", short: "h" },
 		},
@@ -65,10 +63,10 @@ function parseCli(argv: string[]) {
 	const help = values.help ?? false;
 	const options: CliOptions = {
 		json: values.json ?? false,
+		robot: values.robot ?? false,
 		format: (values.format as OutputFormat | undefined) ?? undefined,
 		local: values.local ?? false,
 		global: values.global ?? false,
-		name: values.name as string | undefined,
 		source: values.source as string | undefined,
 	};
 
@@ -81,7 +79,7 @@ function parseCli(argv: string[]) {
 async function dispatch(command: string, args: string[], options: CliOptions): Promise<void> {
 	switch (command) {
 		case "list": {
-			const format: OutputFormat = options.format ?? (options.json ? "json" : "text");
+			const format: OutputFormat = options.format ?? (options.robot ? "robot" : options.json ? "json" : "text");
 			listCommand({
 				format,
 				local: options.local,
@@ -92,11 +90,6 @@ async function dispatch(command: string, args: string[], options: CliOptions): P
 		case "init": {
 			const scope: Scope = options.local ? "local" : "global";
 			await initCommand(args, { scope });
-			return;
-		}
-		case "path": {
-			const format: OutputFormat = options.format ?? (options.json ? "json" : "text");
-			await runPathCommand(args, { name: options.name, format });
 			return;
 		}
 		case "search": {
@@ -116,7 +109,6 @@ async function dispatch(command: string, args: string[], options: CliOptions): P
 		case "uninstall": {
 			const format: OutputFormat = options.format ?? (options.json ? "json" : "text");
 			uninstallCommand(args, {
-				name: options.name,
 				local: options.local,
 				format,
 			});
@@ -124,7 +116,7 @@ async function dispatch(command: string, args: string[], options: CliOptions): P
 		}
 		case "show": {
 			const name = args[0];
-			const format = options.json ? "json" : "text";
+			const format: OutputFormat = options.format ?? (options.robot ? "robot" : options.json ? "json" : "text");
 			await show({ name, format });
 			return;
 		}
