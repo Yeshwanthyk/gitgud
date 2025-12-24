@@ -79,7 +79,8 @@ function parseCli(argv: string[]) {
 async function dispatch(command: string, args: string[], options: CliOptions): Promise<void> {
 	switch (command) {
 		case "list": {
-			const format: OutputFormat = options.format ?? (options.robot ? "robot" : options.json ? "json" : "text");
+			const format: OutputFormat =
+				options.format ?? (options.robot ? "robot" : options.json ? "json" : "text");
 			listCommand({
 				format,
 				local: options.local,
@@ -116,7 +117,8 @@ async function dispatch(command: string, args: string[], options: CliOptions): P
 		}
 		case "show": {
 			const name = args[0];
-			const format: OutputFormat = options.format ?? (options.robot ? "robot" : options.json ? "json" : "text");
+			const format: OutputFormat =
+				options.format ?? (options.robot ? "robot" : options.json ? "json" : "text");
 			await show({ name, format });
 			return;
 		}
