@@ -1,0 +1,64 @@
+{
+	"$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/crates/oxc_linter/schemas/config.json",
+	"plugins": ["typescript", "import", "promise"],
+	"env": {
+		"es2024": true
+	},
+	"globals": {
+		"Bun": "readonly"
+	},
+	"categories": {
+		"correctness": "error"
+	},
+	"rules": {
+		"no-var": "error",
+		"no-unused-vars": "error",
+		"eqeqeq": "error",
+
+		"no-await-in-loop": "off",
+		"no-async-promise-executor": "error",
+		"require-await": "error",
+		"no-promise-executor-return": "error",
+		"prefer-promise-reject-errors": "error",
+		"promise/no-callback-in-promise": "warn",
+		"promise/no-new-statics": "error",
+		"promise/valid-params": "error",
+
+		"no-eval": "error",
+		"no-implied-eval": "error",
+		"no-new-func": "error",
+
+		"no-console": "off",
+		"no-debugger": "error",
+		"no-alert": "error",
+		"no-empty": "error",
+		"no-extra-boolean-cast": "error",
+		"no-lonely-if": "warn",
+		"no-nested-ternary": "warn",
+		"no-unneeded-ternary": "error",
+		"no-useless-rename": "error",
+		"no-useless-return": "error",
+		"prefer-template": "warn",
+		"prefer-rest-params": "error",
+		"prefer-spread": "error",
+		"no-param-reassign": "warn",
+		"default-param-last": "error",
+		"no-array-constructor": "error",
+		"no-object-constructor": "error",
+
+		"typescript/no-explicit-any": "error",
+		"typescript/no-non-null-assertion": "warn",
+		"typescript/prefer-ts-expect-error": "error",
+		"typescript/no-var-requires": "error",
+		"typescript/consistent-type-imports": "error",
+		"typescript/no-import-type-side-effects": "error",
+		"typescript/no-unnecessary-type-constraint": "error",
+
+		"import/no-cycle": "error",
+		"import/no-self-import": "error",
+		"import/no-duplicates": "error",
+		"import/first": "error",
+		"import/no-default-export": "warn"
+	},
+	"ignorePatterns": ["dist", "node_modules", "*.config.*"]
+}

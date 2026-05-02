@@ -23,10 +23,9 @@
 		"noUncheckedIndexedAccess": true,
 		"exactOptionalPropertyTypes": true,
 		"noPropertyAccessFromIndexSignature": true,
-		"types": ["bun-types"],
-		"baseUrl": ".",
+		"types": ["bun"],
 		"paths": {
-			"@/*": ["src/*"]
+			"@/*": ["./src/*"]
 		},
 		"noImplicitOverride": true,
 
