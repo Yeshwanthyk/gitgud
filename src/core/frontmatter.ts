@@ -10,13 +10,17 @@ const FRONTMATTER_REGEX = /^---\s*\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n|$)/;
 const NAME_REGEX = /^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){0,63}$/;
 const MAX_DESCRIPTION_LENGTH = 1024;
 const MAX_COMPATIBILITY_LENGTH = 500;
-const ALLOWED_KEYS = new Set([
+// Recognized fields are validated; anything else is preserved silently so
+// gitgud stays forward-compatible with new Anthropic Skills frontmatter
+// fields (e.g. disable-model-invocation, version, model).
+const RECOGNIZED_KEYS = new Set([
 	"name",
 	"description",
 	"license",
 	"compatibility",
 	"allowed-tools",
 	"metadata",
+	"disable-model-invocation",
 ]);
 
 function normalizeAllowedTools(value: unknown): Result<string[] | undefined> {
@@ -75,12 +79,10 @@ export function parseFrontmatter(content: string): Result<SkillFrontmatter> {
 	return validateFrontmatter(parsed);
 }
 
-function ensureAllowedKeys(record: Record<string, unknown>): Result<undefined> {
-	for (const key of Object.keys(record)) {
-		if (!ALLOWED_KEYS.has(key)) {
-			return err(new Error(`Unknown frontmatter field: ${key}`));
-		}
-	}
+function ensureAllowedKeys(_record: Record<string, unknown>): Result<undefined> {
+	// Forward-compat: do not reject unknown frontmatter keys. Recognized keys
+	// (RECOGNIZED_KEYS) still get validated below; unknown keys are tolerated
+	// so future Anthropic spec additions don't break installs.
 	return ok(undefined);
 }
 
@@ -91,6 +93,7 @@ interface RawFrontmatter {
 	compatibility: unknown;
 	"allowed-tools": unknown;
 	metadata: unknown;
+	"disable-model-invocation": unknown;
 }
 
 export function validateFrontmatter(data: unknown): Result<SkillFrontmatter> {
@@ -171,6 +174,18 @@ export function validateFrontmatter(data: unknown): Result<SkillFrontmatter> {
 	if (normalizedCompatibility) result.compatibility = normalizedCompatibility;
 	if (allowedToolsResult.value) result.allowedTools = allowedToolsResult.value;
 	if (metadataResult.value) result.metadata = metadataResult.value;
+
+	// disable-model-invocation (optional, Anthropic Skills spec)
+	const disableInvocation = raw["disable-model-invocation"];
+	if (disableInvocation !== undefined) {
+		if (typeof disableInvocation !== "boolean") {
+			return err(new Error("Frontmatter disable-model-invocation must be a boolean"));
+		}
+		result.disableModelInvocation = disableInvocation;
+	}
+
+	// Suppress unused warning while still exporting the recognized set for callers.
+	void RECOGNIZED_KEYS;
 
 	return ok(result);
 }

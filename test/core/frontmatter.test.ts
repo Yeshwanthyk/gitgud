@@ -152,15 +152,36 @@ describe("validateFrontmatter", () => {
 		}
 	});
 
-	test("rejects unknown frontmatter fields", () => {
+	test("accepts unknown frontmatter fields (forward-compat)", () => {
 		const result = validateFrontmatter({
 			name: "test",
 			description: "test",
 			triggers: ["git"],
 		});
+		expect(result.ok).toBe(true);
+	});
+
+	test("accepts disable-model-invocation as a boolean", () => {
+		const result = validateFrontmatter({
+			name: "test",
+			description: "test",
+			"disable-model-invocation": true,
+		});
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value.disableModelInvocation).toBe(true);
+		}
+	});
+
+	test("rejects non-boolean disable-model-invocation", () => {
+		const result = validateFrontmatter({
+			name: "test",
+			description: "test",
+			"disable-model-invocation": "yes",
+		});
 		expect(result.ok).toBe(false);
 		if (!result.ok) {
-			expect(result.error.message).toContain("Unknown frontmatter field");
+			expect(result.error.message).toContain("disable-model-invocation");
 		}
 	});
 });
