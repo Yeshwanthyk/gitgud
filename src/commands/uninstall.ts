@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { getGlobalSkillsDir, getLocalSkillsDir } from "../core/paths";
 import { formatError } from "../output";
+import { autoSync } from "./sync";
 import type { OutputFormat } from "../types";
 
 type UninstallOptions = {
@@ -47,6 +48,8 @@ export function uninstallCommand(args: string[], options: UninstallOptions): voi
 		);
 		process.exit(1);
 	}
+
+	if (!options.local) autoSync();
 
 	if (options.format === "json") {
 		process.stdout.write(

@@ -2,6 +2,17 @@
 
 All notable changes to gitgud will be documented in this file.
 
+## [0.0.9] - 2026-05-02
+
+### Added
+
+- **`gitgud sync`**: symlinks every skill in `~/.gitgud/skills/` into the agent skill dirs (`~/.claude/skills/`, `~/.codex/skills/`, `~/.pi/agent/skills/`) using per-skill symlinks. Run `gitgud sync` for all agents, or `gitgud sync claude` to target one. Supports `--dry-run`, `--force` (replace non-managed entries), `--no-prune` (keep dangling managed links), and `--json` output.
+  - Only syncs to agents whose parent dir already exists, so uninstalled tools aren't polluted.
+  - Existing user-owned skills with the same name are left alone unless `--force`.
+  - Stale managed symlinks (target removed from `~/.gitgud/skills/`) are pruned automatically.
+- **Auto-sync hooks**: `install`, `uninstall`, and `update --skills` now run sync silently after success so agent dirs stay consistent without an extra step.
+- **`gitgud init`** prints a hint to run `gitgud sync`.
+
 ## [0.0.8] - 2026-05-02
 
 ### Added

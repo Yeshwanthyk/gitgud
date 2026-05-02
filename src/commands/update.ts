@@ -8,6 +8,7 @@ import { resolveSkill } from "../core/skills";
 import { installFromGithub } from "../sources/github";
 import type { SkillMeta } from "../types";
 import { VERSION } from "../version";
+import { autoSync } from "./sync";
 
 const REPO = "Yeshwanthyk/gitgud";
 
@@ -155,6 +156,7 @@ export async function updateSkillsCommand(names: string[]): Promise<void> {
 		console.log(`${result.ok ? "\u2713" : "\u2717"} ${result.message}`);
 		if (!result.ok) failures++;
 	}
+	autoSync();
 	if (failures > 0) process.exit(1);
 }
 

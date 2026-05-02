@@ -6,6 +6,7 @@ import { installCommand } from "./commands/install";
 import { listCommand } from "./commands/list";
 import { searchCommand } from "./commands/search";
 import { show } from "./commands/show";
+import { syncCommand } from "./commands/sync";
 import { uninstallCommand } from "./commands/uninstall";
 import { updateCommand, updateSkillsCommand } from "./commands/update";
 import type { OutputFormat, Scope } from "./types";
@@ -19,6 +20,9 @@ type CliOptions = {
 	global: boolean;
 	source?: string | undefined;
 	skills: boolean;
+	dryRun: boolean;
+	force: boolean;
+	noPrune: boolean;
 };
 
 const USAGE = `gitgud <command> [args] [options]
@@ -30,6 +34,7 @@ Commands:
   install <name>
   uninstall <name>
   init
+  sync [agent...]        Symlink ~/.gitgud/skills into Claude/Codex/Pi skill dirs
   update                 Self-update gitgud binary
   update <name>          Re-pull a skill from its origin
   update --skills        Re-pull every installed skill
@@ -42,6 +47,9 @@ Options:
   --local         Use local registry
   --global        Use global registry
   --source        Install source (for install)
+  --dry-run       Preview changes (sync)
+  --force         Replace existing non-managed entries (sync)
+  --no-prune      Don't remove dangling managed symlinks (sync)
   -v, --version   Print gitgud version
   -h, --help      Show help
 `;
@@ -74,6 +82,9 @@ function parseCli(argv: string[]): {
 			global: { type: "boolean" },
 			source: { type: "string" },
 			skills: { type: "boolean" },
+			"dry-run": { type: "boolean" },
+			force: { type: "boolean" },
+			"no-prune": { type: "boolean" },
 			help: { type: "boolean", short: "h" },
 			version: { type: "boolean", short: "v" },
 		},
@@ -90,6 +101,9 @@ function parseCli(argv: string[]): {
 		global: values.global ?? false,
 		source: values.source as string | undefined,
 		skills: values.skills ?? false,
+		dryRun: (values["dry-run"] as boolean | undefined) ?? false,
+		force: values.force ?? false,
+		noPrune: (values["no-prune"] as boolean | undefined) ?? false,
 	};
 
 	const command = positionals[0];
@@ -134,6 +148,15 @@ async function dispatch(command: string, args: string[], options: CliOptions): P
 		}
 		case "show": {
 			await show({ name: args[0], format: resolveOutputFormat(options, true) });
+			return;
+		}
+		case "sync": {
+			syncCommand(args, {
+				dryRun: options.dryRun,
+				force: options.force,
+				prune: !options.noPrune,
+				format: resolveOutputFormat(options),
+			});
 			return;
 		}
 		case "update": {

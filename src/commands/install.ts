@@ -2,6 +2,7 @@ import path from "node:path";
 
 import { getGlobalSkillsDir, getLocalSkillsDir } from "../core/paths";
 import { formatError } from "../output";
+import { autoSync } from "./sync";
 import { type GithubInstallResult, installFromGithub } from "../sources/github";
 import { installFromLocal } from "../sources/local";
 import { parseSource } from "../sources/parse";
@@ -121,6 +122,7 @@ export async function installCommand(args: string[], options: InstallOptions): P
 				}
 
 				process.stdout.write(`Installed skill "${res.value}" into ${scopeLabel} registry.\n`);
+				if (!options.local) autoSync();
 				return;
 			}
 
@@ -141,6 +143,7 @@ export async function installCommand(args: string[], options: InstallOptions): P
 					targetDir,
 					sourceInput,
 				});
+				if (!options.local) autoSync();
 				return;
 			}
 
@@ -161,6 +164,7 @@ export async function installCommand(args: string[], options: InstallOptions): P
 					targetDir,
 					sourceInput,
 				});
+				if (!options.local) autoSync();
 			}
 		}
 	} catch (error) {

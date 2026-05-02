@@ -30,6 +30,7 @@ gitgud update <name>                                     # re-pull a skill from 
 gitgud update --skills                                   # re-pull every github-sourced skill
 gitgud update                                            # self-update the gitgud binary
 gitgud uninstall <name>                                  # remove a skill
+gitgud sync [agent...]                                   # symlink ~/.gitgud/skills into Claude/Codex/Pi
 ```
 
 ## Multi-agent skill discovery
@@ -50,6 +51,34 @@ Install once with `gitgud install …` and the skill lands in
 `~/.gitgud/skills/`, the canonical store. Every supported CLI either picks
 it up from there directly (when its skills dir is symlinked to gitgud's) or
 sees it through `gitgud list` / `gitgud show`.
+
+## Sync
+
+`gitgud sync` puts every skill in `~/.gitgud/skills/` in front of the
+agent CLIs by creating per-skill symlinks:
+
+```
+~/.claude/skills/<name>     -> ~/.gitgud/skills/<name>
+~/.codex/skills/<name>      -> ~/.gitgud/skills/<name>
+~/.pi/agent/skills/<name>   -> ~/.gitgud/skills/<name>
+```
+
+It only touches agents whose parent dir already exists (`~/.claude`,
+`~/.codex`, `~/.pi/agent`), so uninstalled tools aren't polluted. Existing
+user-owned skills with the same name are left alone — pass `--force` to
+replace them. Stale managed symlinks (target removed) are pruned
+automatically; pass `--no-prune` to keep them.
+
+```bash
+gitgud sync                    # all available agents
+gitgud sync claude             # one agent only
+gitgud sync --dry-run          # preview
+gitgud sync --json             # structured output
+```
+
+`install`, `uninstall`, and `update --skills` run sync automatically so
+agent dirs stay consistent with `~/.gitgud/skills/` without any extra
+step.
 
 ## Multi-skill repos
 

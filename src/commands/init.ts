@@ -27,7 +27,12 @@ export function initCommand(_args: string[], options: InitOptions): void {
 
 	const targetLabel = scope === "local" ? skillsDir : `global skills dir: ${skillsDir}`;
 
+	const hint =
+		scope === "global"
+			? "\nTip: run `gitgud sync` to symlink installed skills into Claude/Codex/Pi.\n"
+			: "";
+
 	process.stdout.write(
-		`Initialized gitgud ${targetLabel}\n\nAdd this snippet to your AGENTS.md if you want gitgud skills support:\n\n${AGENTS_SNIPPET}\n`
+		`Initialized gitgud ${targetLabel}\n${hint}\nAdd this snippet to your AGENTS.md if you want gitgud skills support:\n\n${AGENTS_SNIPPET}\n`
 	);
 }
