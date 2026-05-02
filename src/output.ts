@@ -18,7 +18,7 @@ export function formatSkillDetail(
 	skill: Skill,
 	content: string,
 	format: OutputFormat,
-	basePath: string = skill.path,
+	basePath: string = skill.path
 ): string {
 	if (format === "json") {
 		return JSON.stringify({ ...skill, base: basePath, content }, null, 2);

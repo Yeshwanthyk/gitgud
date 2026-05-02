@@ -42,7 +42,7 @@ describe("formatSkillDetail", () => {
 	it("includes skill name and base for text", () => {
 		const skill = makeSkill();
 		expect(formatSkillDetail(skill, "hello", "text")).toBe(
-			"Skill: foo\nBase: /tmp/foo\n\n---\nhello",
+			"Skill: foo\nBase: /tmp/foo\n\n---\nhello"
 		);
 	});
 
