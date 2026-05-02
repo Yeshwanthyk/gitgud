@@ -10,19 +10,6 @@ const FRONTMATTER_REGEX = /^---\s*\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n|$)/;
 const NAME_REGEX = /^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){0,63}$/;
 const MAX_DESCRIPTION_LENGTH = 1024;
 const MAX_COMPATIBILITY_LENGTH = 500;
-// Recognized fields are validated; anything else is preserved silently so
-// gitgud stays forward-compatible with new Anthropic Skills frontmatter
-// fields (e.g. disable-model-invocation, version, model).
-const RECOGNIZED_KEYS = new Set([
-	"name",
-	"description",
-	"license",
-	"compatibility",
-	"allowed-tools",
-	"metadata",
-	"disable-model-invocation",
-]);
-
 function normalizeAllowedTools(value: unknown): Result<string[] | undefined> {
 	if (value === undefined) return ok(undefined);
 
@@ -79,13 +66,6 @@ export function parseFrontmatter(content: string): Result<SkillFrontmatter> {
 	return validateFrontmatter(parsed);
 }
 
-function ensureAllowedKeys(_record: Record<string, unknown>): Result<undefined> {
-	// Forward-compat: do not reject unknown frontmatter keys. Recognized keys
-	// (RECOGNIZED_KEYS) still get validated below; unknown keys are tolerated
-	// so future Anthropic spec additions don't break installs.
-	return ok(undefined);
-}
-
 interface RawFrontmatter {
 	name: unknown;
 	description: unknown;
@@ -101,10 +81,6 @@ export function validateFrontmatter(data: unknown): Result<SkillFrontmatter> {
 		return err(new Error("Frontmatter must be a YAML mapping"));
 	}
 
-	const record = data as Record<string, unknown>;
-	const allowedKeysCheck = ensureAllowedKeys(record);
-	if (!allowedKeysCheck.ok) return err(allowedKeysCheck.error);
-
 	const raw = data as RawFrontmatter;
 
 	// name (required)
@@ -116,8 +92,8 @@ export function validateFrontmatter(data: unknown): Result<SkillFrontmatter> {
 	if (!NAME_REGEX.test(normalizedName)) {
 		return err(
 			new Error(
-				"Frontmatter name must be lowercase letters/numbers/hyphens, no leading/trailing/consecutive hyphens, ≤64 chars",
-			),
+				"Frontmatter name must be lowercase letters/numbers/hyphens, no leading/trailing/consecutive hyphens, ≤64 chars"
+			)
 		);
 	}
 
@@ -151,7 +127,7 @@ export function validateFrontmatter(data: unknown): Result<SkillFrontmatter> {
 		}
 		if (normalizedCompatibility.length > MAX_COMPATIBILITY_LENGTH) {
 			return err(
-				new Error(`Frontmatter compatibility must be ≤ ${MAX_COMPATIBILITY_LENGTH} characters`),
+				new Error(`Frontmatter compatibility must be ≤ ${MAX_COMPATIBILITY_LENGTH} characters`)
 			);
 		}
 	}
@@ -183,9 +159,6 @@ export function validateFrontmatter(data: unknown): Result<SkillFrontmatter> {
 		}
 		result.disableModelInvocation = disableInvocation;
 	}
-
-	// Suppress unused warning while still exporting the recognized set for callers.
-	void RECOGNIZED_KEYS;
 
 	return ok(result);
 }

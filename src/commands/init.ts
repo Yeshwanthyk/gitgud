@@ -3,7 +3,7 @@ import path from "node:path";
 import { ensureDir, getGlobalSkillsDir } from "../core/paths";
 import type { Scope } from "../types";
 
-export type InitOptions = {
+type InitOptions = {
 	scope: Scope;
 };
 
@@ -17,7 +17,7 @@ This project stores Claude-compatible Agent Skills in gitgud.
 
 Skills follow the official Agent Skills standard, so loading them with gitgud keeps this AGENT short while still giving you detailed, task-specific guidance on demand.`;
 
-export async function initCommand(_args: string[], options: InitOptions): Promise<void> {
+export function initCommand(_args: string[], options: InitOptions): void {
 	const scope = options.scope;
 
 	const skillsDir =
@@ -28,6 +28,6 @@ export async function initCommand(_args: string[], options: InitOptions): Promis
 	const targetLabel = scope === "local" ? skillsDir : `global skills dir: ${skillsDir}`;
 
 	process.stdout.write(
-		`Initialized gitgud ${targetLabel}\n\nAdd this snippet to your AGENTS.md if you want gitgud skills support:\n\n${AGENTS_SNIPPET}\n`,
+		`Initialized gitgud ${targetLabel}\n\nAdd this snippet to your AGENTS.md if you want gitgud skills support:\n\n${AGENTS_SNIPPET}\n`
 	);
 }

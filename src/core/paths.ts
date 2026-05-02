@@ -4,36 +4,22 @@ import path from "node:path";
 
 import type { Scope } from "../types";
 
+function homeDir(): string {
+	const home = process.env["HOME"];
+	return home && home.length > 0 ? home : os.homedir();
+}
+
 export function getGlobalDir(): string {
-	// biome-ignore lint/complexity/useLiteralKeys: TS requires bracket notation for index signatures
-	const home = process.env["HOME"] || os.homedir();
-	return path.join(home, ".gitgud");
-}
-
-export function getClaudeSkillsDir(): string {
-	// biome-ignore lint/complexity/useLiteralKeys: TS requires bracket notation for index signatures
-	const home = process.env["HOME"] || os.homedir();
-	return path.join(home, ".claude", "skills");
-}
-
-export function getCodexSkillsDir(): string {
-	// biome-ignore lint/complexity/useLiteralKeys: TS requires bracket notation for index signatures
-	const home = process.env["HOME"] || os.homedir();
-	return path.join(home, ".codex", "skills");
-}
-
-export function getPiSkillsDir(): string {
-	// biome-ignore lint/complexity/useLiteralKeys: TS requires bracket notation for index signatures
-	const home = process.env["HOME"] || os.homedir();
-	return path.join(home, ".pi", "agent", "skills");
+	return path.join(homeDir(), ".gitgud");
 }
 
 /** Global skill dirs for known agent CLIs, in fallback order. */
 export function getAgentSkillsDirs(): { name: string; dir: string }[] {
+	const home = homeDir();
 	return [
-		{ name: "claude", dir: getClaudeSkillsDir() },
-		{ name: "codex", dir: getCodexSkillsDir() },
-		{ name: "pi", dir: getPiSkillsDir() },
+		{ name: "claude", dir: path.join(home, ".claude", "skills") },
+		{ name: "codex", dir: path.join(home, ".codex", "skills") },
+		{ name: "pi", dir: path.join(home, ".pi", "agent", "skills") },
 	];
 }
 

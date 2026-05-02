@@ -1,11 +1,12 @@
 import type { InstallSource } from "../types";
 
-const isLocalPath = (s: string): boolean =>
-	s.startsWith("./") || s.startsWith("../") || s.startsWith("/");
+function isLocalPath(s: string): boolean {
+	return s.startsWith("./") || s.startsWith("../") || s.startsWith("/");
+}
 
-const parseGithubUrl = (s: string): InstallSource | null => {
+function parseGithubUrl(s: string): InstallSource | null {
 	const m = s.match(
-		/^https?:\/\/github\.com\/([^/]+)\/([^/#?]+?)(?:\.git)?\/?(?:tree\/([^/]+)\/?(.*))?$/i,
+		/^https?:\/\/github\.com\/([^/]+)\/([^/#?]+?)(?:\.git)?\/?(?:tree\/([^/]+)\/?(.*))?$/i
 	);
 	if (!m) return null;
 
@@ -18,9 +19,9 @@ const parseGithubUrl = (s: string): InstallSource | null => {
 	if (ref) out.ref = ref;
 	if (subdir) out.subdir = subdir.replace(/\/$/, "");
 	return out;
-};
+}
 
-const parseGhShorthand = (s: string): InstallSource | null => {
+function parseGhShorthand(s: string): InstallSource | null {
 	if (!s.startsWith("gh:")) return null;
 	const rest = s.slice(3);
 	const parts = rest.split("/").filter(Boolean);
@@ -31,9 +32,9 @@ const parseGhShorthand = (s: string): InstallSource | null => {
 	const out: InstallSource = { type: "github", repo };
 	if (subdir) out.subdir = subdir;
 	return out;
-};
+}
 
-const parseRegistryId = (s: string): InstallSource | null => {
+function parseRegistryId(s: string): InstallSource | null {
 	if (!s.startsWith("@")) return null;
 
 	// Split optional version suffix after the last slash.
@@ -51,7 +52,7 @@ const parseRegistryId = (s: string): InstallSource | null => {
 	const out: InstallSource = { type: "registry", package: pkg };
 	if (version) out.version = version;
 	return out;
-};
+}
 
 export function parseSource(source: string): InstallSource {
 	const s = source.trim();

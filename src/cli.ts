@@ -43,11 +43,22 @@ Options:
   -h, --help   Show help
 `;
 
-function printHelp() {
+function printHelp(): void {
 	process.stdout.write(`${USAGE}\n`);
 }
 
-function parseCli(argv: string[]) {
+function resolveOutputFormat(options: CliOptions, allowRobot = false): OutputFormat {
+	if (options.format) return options.format;
+	if (allowRobot && options.robot) return "robot";
+	return options.json ? "json" : "text";
+}
+
+function parseCli(argv: string[]): {
+	help: boolean;
+	options: CliOptions;
+	command: string | undefined;
+	args: string[];
+} {
 	const { values, positionals } = parseArgs({
 		args: argv,
 		allowPositionals: true,
@@ -84,10 +95,8 @@ function parseCli(argv: string[]) {
 async function dispatch(command: string, args: string[], options: CliOptions): Promise<void> {
 	switch (command) {
 		case "list": {
-			const format: OutputFormat =
-				options.format ?? (options.robot ? "robot" : options.json ? "json" : "text");
 			listCommand({
-				format,
+				format: resolveOutputFormat(options, true),
 				local: options.local,
 				global: options.global,
 			});
@@ -95,36 +104,30 @@ async function dispatch(command: string, args: string[], options: CliOptions): P
 		}
 		case "init": {
 			const scope: Scope = options.local ? "local" : "global";
-			await initCommand(args, { scope });
+			initCommand(args, { scope });
 			return;
 		}
 		case "search": {
-			const format: OutputFormat = options.format ?? (options.json ? "json" : "text");
-			await searchCommand(args, { format });
+			await searchCommand(args, { format: resolveOutputFormat(options) });
 			return;
 		}
 		case "install": {
-			const format: OutputFormat = options.format ?? (options.json ? "json" : "text");
 			await installCommand(args, {
 				source: options.source,
 				local: options.local,
-				format,
+				format: resolveOutputFormat(options),
 			});
 			return;
 		}
 		case "uninstall": {
-			const format: OutputFormat = options.format ?? (options.json ? "json" : "text");
 			uninstallCommand(args, {
 				local: options.local,
-				format,
+				format: resolveOutputFormat(options),
 			});
 			return;
 		}
 		case "show": {
-			const name = args[0];
-			const format: OutputFormat =
-				options.format ?? (options.robot ? "robot" : options.json ? "json" : "text");
-			await show({ name, format });
+			await show({ name: args[0], format: resolveOutputFormat(options, true) });
 			return;
 		}
 		case "update": {
@@ -140,7 +143,7 @@ async function dispatch(command: string, args: string[], options: CliOptions): P
 	}
 }
 
-async function main(argv: string[]) {
+async function main(argv: string[]): Promise<void> {
 	const { help, options, command, args } = parseCli(argv);
 
 	if (help || !command) {
