@@ -9,7 +9,7 @@ import { installFromGithub } from "../sources/github";
 import type { SkillMeta } from "../types";
 
 const REPO = "Yeshwanthyk/gitgud";
-const VERSION = "0.0.3"; // Updated on release
+const VERSION = "0.0.6"; // Updated on release
 
 type ReleaseAsset = {
 	name: string;

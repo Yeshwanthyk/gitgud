@@ -2,6 +2,25 @@
 
 All notable changes to gitgud will be documented in this file.
 
+## [0.0.6] - 2026-05-02
+
+### Added
+
+- **Multi-agent skill discovery**: `gitgud list`, `show`, and `search` now scan `~/.codex/skills/` and `~/.pi/agent/skills/` in addition to `~/.claude/skills/`. One install, all three CLIs see the skill.
+- **Multi-skill repo installs**: `gitgud install <repo-url>` now discovers every `SKILL.md` in a repo (including those under hidden agent dirs `.agents/`, `.claude/`, `.codex/`, `.pi/`) and installs them all. Each skill records its repo subpath in `.gitgud-meta.json`.
+- **`gitgud update <name>`**: Re-pull a single installed skill from its origin URL.
+- **`gitgud update --skills`**: Re-pull every github-sourced skill in one shot.
+- **`disable-model-invocation` frontmatter field** (Anthropic Skills spec) is now recognized and validated as a boolean.
+
+### Changed
+
+- **Forward-compatible frontmatter parser**: Unknown frontmatter fields are tolerated instead of hard-rejected. Recognized fields are still validated. This unblocks installs of spec-compliant skills that use newer Anthropic fields.
+- **README**: New "For AI agents" section with an end-to-end install/update playbook agents can follow on the user's behalf.
+
+### Fixed
+
+- `gitgud install https://github.com/backnotprop/plannotator` (and similar multi-skill repos that ship under `.agents/skills/`) no longer fails with `Unknown frontmatter field` or `Multiple skills found`.
+
 ## [0.0.5] - 2025-12-19
 
 ### Added
