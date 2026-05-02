@@ -2,6 +2,18 @@
 
 All notable changes to gitgud will be documented in this file.
 
+## [0.0.7] - 2026-05-02
+
+### Changed
+
+- **Toolchain**: Replaced biome with oxlint + oxfmt + eslint + knip. Pre-commit now runs lint, format check, typecheck, knip, and tests in parallel.
+- **Refactor**: Centralized `Result` helpers in `src/types.ts`, deduplicated remote-install output in `installCommand`, simplified CLI dispatch with a shared format resolver, consolidated agent skill-dir helpers in `src/core/paths.ts`.
+- **tsconfig**: Dropped deprecated `baseUrl`, switched `types` to `@types/bun`.
+
+### Fixed
+
+- **`installFromRegistry` return type**: Was typed `Result<string>` but actually returned `Result<GithubInstallResult>`. The mismatch was hidden under biome (no typecheck). The registry install branch now produces the same multi-skill text/JSON output as the GitHub branch.
+
 ## [0.0.6] - 2026-05-02
 
 ### Added
