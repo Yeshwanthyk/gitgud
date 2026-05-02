@@ -1,10 +1,10 @@
 import type { Result } from "../types";
-import { installFromGithub } from "./github";
+import { type GithubInstallResult, installFromGithub } from "./github";
 
 const ok = <T>(value: T): Result<T> => ({ ok: true, value });
 const err = <T = never>(error: Error): Result<T> => ({ ok: false, error });
 
-export type InstallFromRegistryOptions = {
+type InstallFromRegistryOptions = {
 	identifier: string;
 	targetDir: string;
 };
@@ -22,7 +22,7 @@ async function resolveRegistrySkill(identifier: string): Promise<Result<{ source
 
 	if (parts.length !== 3) {
 		return err(
-			new Error(`Invalid skill identifier format: ${identifier}. Expected: @owner/repo/skill`),
+			new Error(`Invalid skill identifier format: ${identifier}. Expected: @owner/repo/skill`)
 		);
 	}
 
@@ -47,8 +47,8 @@ async function resolveRegistrySkill(identifier: string): Promise<Result<{ source
 			const ownerRaw = owner.startsWith("@") ? owner.slice(1) : owner;
 			return err(
 				new Error(
-					`Skill "${identifier}" not found in the claude-plugins registry.\n\nThe skill may not be published yet. Try installing directly from GitHub:\n  gitgud install ${skill} --source "https://github.com/${ownerRaw}/${repo}"\n\nBrowse available skills: https://claude-plugins.dev/skills`,
-				),
+					`Skill "${identifier}" not found in the claude-plugins registry.\n\nThe skill may not be published yet. Try installing directly from GitHub:\n  gitgud install ${skill} --source "https://github.com/${ownerRaw}/${repo}"\n\nBrowse available skills: https://claude-plugins.dev/skills`
+				)
 			);
 		}
 
@@ -106,8 +106,8 @@ function normalizeGithubPath(sourceUrl: string): string {
 }
 
 export async function installFromRegistry(
-	options: InstallFromRegistryOptions,
-): Promise<Result<string>> {
+	options: InstallFromRegistryOptions
+): Promise<Result<GithubInstallResult>> {
 	const identifier = options.identifier.trim();
 	if (!identifier) {
 		return err(new Error("Empty registry identifier"));
@@ -126,7 +126,7 @@ export async function installFromRegistry(
 
 	const subpath = rest.length > 0 ? rest.join("/") : undefined;
 
-	return await installFromGithub({
+	return installFromGithub({
 		url: `https://github.com/${owner}/${repo}`,
 		subpath,
 		targetDir: options.targetDir,

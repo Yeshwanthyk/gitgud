@@ -3,7 +3,10 @@ import { installFromRegistry } from "../../src/sources/registry";
 
 // Mock installFromGithub
 const mockInstallFromGithub = mock(() =>
-	Promise.resolve({ ok: true, value: "test-skill" } as const),
+	Promise.resolve({
+		ok: true,
+		value: { installed: ["/tmp/skills/test-skill"], skipped: [] },
+	} as const)
 );
 
 mock.module("../../src/sources/github", () => ({
@@ -27,7 +30,7 @@ describe("sources/registry", () => {
 						sourceUrl:
 							"anthropics/claude-code/tree/main/plugins/frontend-design/skills/frontend-design",
 					}),
-			} as Response),
+			} as Response)
 		) as unknown as typeof fetch;
 
 		const res = await installFromRegistry({
@@ -37,13 +40,13 @@ describe("sources/registry", () => {
 
 		expect(res.ok).toBe(true);
 		if (res.ok) {
-			expect(res.value).toBe("test-skill");
+			expect(res.value.installed).toEqual(["/tmp/skills/test-skill"]);
 		}
 	});
 
 	test("returns a friendly error on network failure", async () => {
 		globalThis.fetch = mock(() =>
-			Promise.reject(new Error("Network down")),
+			Promise.reject(new Error("Network down"))
 		) as unknown as typeof fetch;
 
 		const res = await installFromRegistry({
@@ -64,7 +67,7 @@ describe("sources/registry", () => {
 				status: 404,
 				statusText: "Not Found",
 				json: () => Promise.resolve({ error: "Skill not found" }),
-			} as unknown as Response),
+			} as unknown as Response)
 		) as unknown as typeof fetch;
 
 		const res = await installFromRegistry({
@@ -86,7 +89,7 @@ describe("sources/registry", () => {
 				status: 500,
 				statusText: "Internal Server Error",
 				json: () => Promise.resolve({ error: "Server error" }),
-			} as unknown as Response),
+			} as unknown as Response)
 		) as unknown as typeof fetch;
 
 		const res = await installFromRegistry({
