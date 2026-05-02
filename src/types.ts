@@ -7,6 +7,7 @@ export interface SkillFrontmatter {
 	compatibility?: string;
 	allowedTools?: string[];
 	metadata?: Record<string, string>;
+	disableModelInvocation?: boolean;
 }
 
 export interface Skill {
@@ -20,6 +21,10 @@ export interface Skill {
 export interface SkillMeta {
 	source: string;
 	installedAt: string;
+	// Where in the repo this skill came from (for multi-skill repos)
+	subpath?: string;
+	// Resolved git ref / commit at install time, used by `gitgud update`
+	ref?: string;
 }
 
 export type InstallSource =
