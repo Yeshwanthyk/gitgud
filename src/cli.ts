@@ -7,7 +7,7 @@ import { listCommand } from "./commands/list";
 import { searchCommand } from "./commands/search";
 import { show } from "./commands/show";
 import { uninstallCommand } from "./commands/uninstall";
-import { updateCommand } from "./commands/update";
+import { updateCommand, updateSkillsCommand } from "./commands/update";
 import type { OutputFormat, Scope } from "./types";
 
 type CliOptions = {
@@ -17,6 +17,7 @@ type CliOptions = {
 	local: boolean;
 	global: boolean;
 	source?: string | undefined;
+	skills: boolean;
 };
 
 const USAGE = `gitgud <command> [args] [options]
@@ -28,7 +29,9 @@ Commands:
   install <name>
   uninstall <name>
   init
-  update
+  update                 Self-update gitgud binary
+  update <name>          Re-pull a skill from its origin
+  update --skills        Re-pull every installed skill
 
 Options:
   --format     Output format: text|json|robot
@@ -55,6 +58,7 @@ function parseCli(argv: string[]) {
 			local: { type: "boolean" },
 			global: { type: "boolean" },
 			source: { type: "string" },
+			skills: { type: "boolean" },
 			help: { type: "boolean", short: "h" },
 		},
 		strict: true,
@@ -68,6 +72,7 @@ function parseCli(argv: string[]) {
 		local: values.local ?? false,
 		global: values.global ?? false,
 		source: values.source as string | undefined,
+		skills: values.skills ?? false,
 	};
 
 	const command = positionals[0];
@@ -123,6 +128,10 @@ async function dispatch(command: string, args: string[], options: CliOptions): P
 			return;
 		}
 		case "update": {
+			if (options.skills || args.length > 0) {
+				await updateSkillsCommand(args);
+				return;
+			}
 			await updateCommand();
 			return;
 		}
