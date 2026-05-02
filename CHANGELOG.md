@@ -2,6 +2,12 @@
 
 All notable changes to gitgud will be documented in this file.
 
+## [0.0.11] - 2026-05-02
+
+### Changed
+
+- **`gitgud sync` output**: actions are grouped by agent (claude, codex, pi) with bold headers, color-coded action labels (green linked, yellow skipped, cyan relinked, magenta replaced, red pruned, gray noop), aligned columns, and `~/`-shortened paths in skip reasons. Untouched skills collapse into a single `· N already in sync` line per agent. Colors auto-disable when piped or when `NO_COLOR` is set.
+
 ## [0.0.10] - 2026-05-02
 
 ### Fixed

@@ -8,6 +8,7 @@ import {
 	symlinkSync,
 	unlinkSync,
 } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 import { getAgentSkillsDirs, getGlobalSkillsDir } from "../core/paths";
@@ -242,20 +243,101 @@ function summarize(actions: SyncEntry[]): ActionCounts {
 	return counts;
 }
 
-function symbolFor(action: SyncAction): string {
+const ANSI = {
+	reset: "\x1b[0m",
+	bold: "\x1b[1m",
+	dim: "\x1b[2m",
+	red: "\x1b[31m",
+	green: "\x1b[32m",
+	yellow: "\x1b[33m",
+	blue: "\x1b[34m",
+	magenta: "\x1b[35m",
+	cyan: "\x1b[36m",
+	gray: "\x1b[90m",
+} as const;
+
+function useColor(): boolean {
+	// biome-ignore lint/complexity/useLiteralKeys: bracket notation
+	if (process.env["NO_COLOR"]) return false;
+	return Boolean(process.stdout.isTTY);
+}
+
+function paint(color: string, str: string): string {
+	return useColor() ? `${color}${str}${ANSI.reset}` : str;
+}
+
+type ActionStyle = { symbol: string; color: string; label: string };
+
+function styleFor(action: SyncAction): ActionStyle {
 	switch (action) {
 		case "linked":
-			return "\u2713";
+			return { symbol: "\u2713", color: ANSI.green, label: "linked" };
 		case "relinked":
+			return { symbol: "\u21bb", color: ANSI.cyan, label: "relinked" };
 		case "replaced":
-			return "\u21bb";
+			return { symbol: "\u21bb", color: ANSI.magenta, label: "replaced" };
 		case "skipped":
-			return "\u2192";
+			return { symbol: "\u2192", color: ANSI.yellow, label: "skipped" };
 		case "pruned":
-			return "\u2717";
+			return { symbol: "\u2717", color: ANSI.red, label: "pruned" };
 		case "noop":
-			return "\u00b7";
+			return { symbol: "\u00b7", color: ANSI.gray, label: "noop" };
 	}
+}
+
+function homify(input: string): string {
+	// biome-ignore lint/complexity/useLiteralKeys: bracket notation
+	const envHome = process.env["HOME"];
+	const home = envHome && envHome.length > 0 ? envHome : os.homedir();
+	if (!home) return input;
+	return input.split(home).join("~");
+}
+
+const AGENT_ORDER: AgentName[] = ["claude", "codex", "pi"];
+const LABEL_WIDTH = 8; // longest label is "relinked"
+
+function printAgentSection(agent: AgentName, entries: SyncEntry[]): void {
+	const nonNoop = entries.filter((e) => e.action !== "noop");
+	const noopCount = entries.length - nonNoop.length;
+	if (nonNoop.length === 0 && noopCount === 0) return;
+
+	process.stdout.write(`${paint(ANSI.bold, agent)}\n`);
+
+	const skillWidth = nonNoop.reduce((max, e) => Math.max(max, e.skill.length), 0);
+
+	for (const e of nonNoop) {
+		const style = styleFor(e.action);
+		const symbol = paint(style.color, style.symbol);
+		const label = paint(style.color, style.label.padEnd(LABEL_WIDTH));
+		const skill = e.reason ? e.skill.padEnd(skillWidth) : e.skill;
+		const reason = e.reason ? `  ${paint(ANSI.gray, `\u2014 ${homify(e.reason)}`)}` : "";
+		process.stdout.write(`  ${symbol} ${label}  ${skill}${reason}\n`);
+	}
+
+	if (noopCount > 0) {
+		const style = styleFor("noop");
+		process.stdout.write(
+			`  ${paint(style.color, `${style.symbol} ${noopCount} already in sync`)}\n`
+		);
+	}
+
+	process.stdout.write("\n");
+}
+
+function renderSummary(s: ActionCounts): string {
+	const parts: string[] = [];
+	const push = (n: number, color: string, label: string): void => {
+		if (n === 0) return;
+		parts.push(paint(color, `${n} ${label}`));
+	};
+	push(s.linked, ANSI.green, "linked");
+	push(s.relinked, ANSI.cyan, "relinked");
+	push(s.replaced, ANSI.magenta, "replaced");
+	push(s.skipped, ANSI.yellow, "skipped");
+	push(s.pruned, ANSI.red, "pruned");
+	push(s.noop, ANSI.gray, "noop");
+	if (parts.length === 0) return paint(ANSI.dim, "nothing changed");
+	return parts.join(paint(ANSI.dim, " \u00b7 "));
 }
 
 function printActions(actions: SyncEntry[], format: OutputFormat, dryRun: boolean): void {
@@ -280,21 +362,22 @@ function printActions(actions: SyncEntry[], format: OutputFormat, dryRun: boolea
 		return;
 	}
 
-	let printedAny = false;
+	if (dryRun) process.stdout.write(`${paint(ANSI.dim, "(dry-run)")}\n\n`);
+
+	const byAgent = new Map<AgentName, SyncEntry[]>();
 	for (const a of actions) {
-		if (a.action === "noop") continue;
-		const reason = a.reason ? ` (${a.reason})` : "";
-		process.stdout.write(`${symbolFor(a.action)} ${a.action} ${a.agent}/${a.skill}${reason}\n`);
-		printedAny = true;
+		const bucket = byAgent.get(a.agent);
+		if (bucket) bucket.push(a);
+		else byAgent.set(a.agent, [a]);
 	}
 
-	const s = summarize(actions);
-	const prefix = dryRun ? "(dry-run) " : "";
-	if (!printedAny) process.stdout.write(`${prefix}all up to date (${s.noop} noop)\n`);
-	else
-		process.stdout.write(
-			`${prefix}linked=${s.linked} relinked=${s.relinked} replaced=${s.replaced} skipped=${s.skipped} pruned=${s.pruned} noop=${s.noop}\n`
-		);
+	for (const agent of AGENT_ORDER) {
+		const entries = byAgent.get(agent);
+		if (!entries) continue;
+		printAgentSection(agent, entries);
+	}
+
+	process.stdout.write(`${renderSummary(summarize(actions))}\n`);
 }
 
 type SyncCommandOptions = {
