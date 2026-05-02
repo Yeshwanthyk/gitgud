@@ -28,9 +28,11 @@ detect_platform() {
 
 # Get latest release tag from GitHub
 get_latest_version() {
-    curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | 
-        grep '"tag_name"' | 
-        sed -E 's/.*"([^"]+)".*/\1/'
+    # GitHub returns a single-line JSON; pull the tag_name field specifically
+    # so we don't accidentally capture quoted strings from the release body.
+    curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" |
+        grep -m1 -oE '"tag_name"[[:space:]]*:[[:space:]]*"[^"]+"' |
+        sed -E 's/.*"([^"]+)"$/\1/'
 }
 
 main() {
