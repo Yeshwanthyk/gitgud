@@ -7,9 +7,9 @@ import { pipeline } from "node:stream/promises";
 import { resolveSkill } from "../core/skills";
 import { installFromGithub } from "../sources/github";
 import type { SkillMeta } from "../types";
+import { VERSION } from "../version";
 
 const REPO = "Yeshwanthyk/gitgud";
-const VERSION = "0.0.7"; // Updated on release
 
 type ReleaseAsset = {
 	name: string;

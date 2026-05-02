@@ -2,6 +2,13 @@
 
 All notable changes to gitgud will be documented in this file.
 
+## [0.0.8] - 2026-05-02
+
+### Added
+
+- **`gitgud --version`, `-v`, and `gitgud version`** all print the installed version.
+- **`install.sh`**: tightened `tag_name` parsing so long release notes can't break the download URL.
+
 ## [0.0.7] - 2026-05-02
 
 ### Changed

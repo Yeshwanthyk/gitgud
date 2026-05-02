@@ -9,6 +9,7 @@ import { show } from "./commands/show";
 import { uninstallCommand } from "./commands/uninstall";
 import { updateCommand, updateSkillsCommand } from "./commands/update";
 import type { OutputFormat, Scope } from "./types";
+import { VERSION } from "./version";
 
 type CliOptions = {
 	json: boolean;
@@ -32,15 +33,17 @@ Commands:
   update                 Self-update gitgud binary
   update <name>          Re-pull a skill from its origin
   update --skills        Re-pull every installed skill
+  version                Print gitgud version
 
 Options:
-  --format     Output format: text|json|robot
-  --json       Output JSON
-  --robot      Robot-friendly output (TSV for list, raw content for show)
-  --local      Use local registry
-  --global     Use global registry
-  --source     Install source (for install)
-  -h, --help   Show help
+  --format        Output format: text|json|robot
+  --json          Output JSON
+  --robot         Robot-friendly output (TSV for list, raw content for show)
+  --local         Use local registry
+  --global        Use global registry
+  --source        Install source (for install)
+  -v, --version   Print gitgud version
+  -h, --help      Show help
 `;
 
 function printHelp(): void {
@@ -55,6 +58,7 @@ function resolveOutputFormat(options: CliOptions, allowRobot = false): OutputFor
 
 function parseCli(argv: string[]): {
 	help: boolean;
+	version: boolean;
 	options: CliOptions;
 	command: string | undefined;
 	args: string[];
@@ -71,11 +75,13 @@ function parseCli(argv: string[]): {
 			source: { type: "string" },
 			skills: { type: "boolean" },
 			help: { type: "boolean", short: "h" },
+			version: { type: "boolean", short: "v" },
 		},
 		strict: true,
 	});
 
 	const help = values.help ?? false;
+	const version = values.version ?? false;
 	const options: CliOptions = {
 		json: values.json ?? false,
 		robot: values.robot ?? false,
@@ -89,7 +95,7 @@ function parseCli(argv: string[]): {
 	const command = positionals[0];
 	const args = positionals.slice(1);
 
-	return { help, options, command, args };
+	return { help, version, options, command, args };
 }
 
 async function dispatch(command: string, args: string[], options: CliOptions): Promise<void> {
@@ -138,13 +144,22 @@ async function dispatch(command: string, args: string[], options: CliOptions): P
 			await updateCommand();
 			return;
 		}
+		case "version": {
+			process.stdout.write(`gitgud v${VERSION}\n`);
+			return;
+		}
 		default:
 			throw new Error(`Unknown command: ${command}`);
 	}
 }
 
 async function main(argv: string[]): Promise<void> {
-	const { help, options, command, args } = parseCli(argv);
+	const { help, version, options, command, args } = parseCli(argv);
+
+	if (version) {
+		process.stdout.write(`gitgud v${VERSION}\n`);
+		return;
+	}
 
 	if (help || !command) {
 		printHelp();
