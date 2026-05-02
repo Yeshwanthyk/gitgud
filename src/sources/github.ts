@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { cp, mkdir, mkdtemp, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readdir, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -53,20 +53,6 @@ function normalizeGithubSource(
 	}
 }
 
-async function moveDir(from: string, to: string): Promise<void> {
-	try {
-		await rename(from, to);
-	} catch (error) {
-		// Fallback for cross-device moves.
-		if (error instanceof Error && (error as NodeJS.ErrnoException).code === "EXDEV") {
-			await cp(from, to, { recursive: true });
-			await rm(from, { recursive: true, force: true });
-			return;
-		}
-		throw error;
-	}
-}
-
 function runTarExtract(archivePath: string, extractDir: string): Promise<void> {
 	return new Promise((resolve, reject) => {
 		const child = spawn("tar", ["-xzf", archivePath, "-C", extractDir], {
@@ -94,11 +80,16 @@ async function findFirstDirectory(dir: string): Promise<string> {
 	throw new Error(`No directory found in extracted archive at ${dir}`);
 }
 
+// Hidden directories that commonly contain agent skills. Without this list,
+// repos that ship skills under .agents/, .claude/, .codex/, .pi/ would be
+// invisible to gitgud because we otherwise skip dotfile dirs to avoid .git etc.
+const AGENT_SKILL_HIDDEN_DIRS = new Set([".agents", ".claude", ".codex", ".pi", ".gitgud"]);
+
 /**
  * Recursively search for SKILL.md files in a directory.
  * Returns paths to directories containing SKILL.md, sorted by depth (shallowest first).
  */
-async function findSkillDirs(dir: string, maxDepth = 4): Promise<string[]> {
+async function findSkillDirs(dir: string, maxDepth = 5): Promise<string[]> {
 	const results: { path: string; depth: number }[] = [];
 
 	async function search(currentDir: string, depth: number): Promise<void> {
@@ -113,7 +104,7 @@ async function findSkillDirs(dir: string, maxDepth = 4): Promise<string[]> {
 		try {
 			const entries = await readdir(currentDir);
 			for (const entry of entries) {
-				if (entry.startsWith(".")) continue; // Skip hidden dirs
+				if (entry.startsWith(".") && !AGENT_SKILL_HIDDEN_DIRS.has(entry)) continue;
 				const fullPath = path.join(currentDir, entry);
 				const s = await stat(fullPath);
 				if (s.isDirectory()) {
@@ -165,9 +156,14 @@ async function downloadGithubSource(gigetSource: string, tempDir: string): Promi
 	return finalDir;
 }
 
+export interface GithubInstallResult {
+	installed: string[];
+	skipped: { name: string; reason: string }[];
+}
+
 export async function installFromGithub(
 	options: InstallFromGithubOptions,
-): Promise<Result<string>> {
+): Promise<Result<GithubInstallResult>> {
 	const normalized = normalizeGithubSource(options.url, options.subpath);
 	if (!normalized.ok) return err(normalized.error);
 
@@ -182,56 +178,75 @@ export async function installFromGithub(
 
 	try {
 		const downloadedDir = await downloadGithubSource(gigetSource, tempDir);
-		let skillDir = path.resolve(downloadedDir);
+		const repoRoot = path.resolve(downloadedDir);
 
 		// Try parsing at root first
-		let parsed = parseSkill(skillDir, "local");
+		const parsed = parseSkill(repoRoot, "local");
+		let candidates: string[];
 
-		// If no SKILL.md at root, auto-discover nested skills
-		if (!parsed.ok) {
-			const skillDirs = await findSkillDirs(skillDir);
-			if (skillDirs.length === 0) {
+		if (parsed.ok) {
+			candidates = [repoRoot];
+		} else {
+			// Auto-discover nested skills (descends into known agent dirs like
+			// .agents/, .claude/, .codex/, .pi/ as well as plain subdirs).
+			candidates = await findSkillDirs(repoRoot);
+			if (candidates.length === 0) {
 				throw new Error(
 					"No SKILL.md found in repository. Expected at root or in a subdirectory.\n" +
 						"Hint: Use a URL with subpath like: https://github.com/user/repo/tree/main/path/to/skill",
 				);
 			}
-			if (skillDirs.length > 1) {
-				const relative = skillDirs.map((d) => path.relative(skillDir, d)).join(", ");
-				throw new Error(
-					`Multiple skills found: ${relative}\nSpecify which one to install using a URL with subpath.`,
-				);
-			}
-			// Single skill found - use it
-			skillDir = skillDirs[0] as string;
-			parsed = parseSkill(skillDir, "local");
-			if (!parsed.ok) {
-				throw parsed.error;
-			}
-		}
-
-		const skillName = parsed.value.frontmatter.name;
-		if (!skillName) {
-			throw new Error("Skill name missing from frontmatter");
 		}
 
 		await mkdir(options.targetDir, { recursive: true });
-		const destDir = path.join(options.targetDir, skillName);
-		if (existsSync(destDir)) {
-			throw new Error(`Skill already exists at ${destDir}`);
+
+		const installed: string[] = [];
+		const skipped: { name: string; reason: string }[] = [];
+
+		for (const candidateDir of candidates) {
+			const parsedSkill = parseSkill(candidateDir, "local");
+			if (!parsedSkill.ok) {
+				skipped.push({
+					name: path.relative(repoRoot, candidateDir) || "<root>",
+					reason: parsedSkill.error.message,
+				});
+				continue;
+			}
+
+			const skillName = parsedSkill.value.frontmatter.name;
+			const destDir = path.join(options.targetDir, skillName);
+			if (existsSync(destDir)) {
+				skipped.push({
+					name: skillName,
+					reason: `already installed at ${destDir}`,
+				});
+				continue;
+			}
+
+			// cp instead of moveDir so each skill in a multi-skill repo gets its
+			// own copy (the candidate dirs share the same temp tree).
+			await cp(candidateDir, destDir, { recursive: true });
+
+			const subpath = path.relative(repoRoot, candidateDir);
+			const meta: SkillMeta = {
+				source: metaSource,
+				installedAt: new Date().toISOString(),
+			};
+			if (subpath) meta.subpath = subpath;
+			const metaPath = path.join(destDir, ".gitgud-meta.json");
+			await writeFile(metaPath, JSON.stringify(meta, null, 2), "utf8");
+
+			installed.push(destDir);
 		}
 
-		await moveDir(skillDir, destDir);
-
-		const meta: SkillMeta = {
-			source: metaSource,
-			installedAt: new Date().toISOString(),
-		};
-		const metaPath = path.join(destDir, ".gitgud-meta.json");
-		await writeFile(metaPath, JSON.stringify(meta, null, 2), "utf8");
-
 		await cleanup();
-		return ok(destDir);
+
+		if (installed.length === 0) {
+			const detail = skipped.map((s) => `  - ${s.name}: ${s.reason}`).join("\n");
+			return err(new Error(`No skills installed.\n${detail}`));
+		}
+
+		return ok({ installed, skipped });
 	} catch (error) {
 		await cleanup();
 		const message = error instanceof Error ? error.message : "Unknown GitHub install error";

@@ -83,17 +83,18 @@ export async function installCommand(args: string[], options: InstallOptions): P
 				process.exit(1);
 			}
 
-			const installedPath = res.value;
-			const name = path.basename(installedPath);
+			const { installed, skipped } = res.value;
+			const names = installed.map((p) => path.basename(p));
+			const scopeLabel = options.local ? "local" : "global";
 
 			if (options.format === "json") {
 				process.stdout.write(
 					`${JSON.stringify(
 						{
 							ok: true,
-							name,
-							path: installedPath,
-							scope: options.local ? "local" : "global",
+							installed: installed.map((p, i) => ({ name: names[i], path: p })),
+							skipped,
+							scope: scopeLabel,
 							targetDir,
 							source: sourceInput,
 							sourceType: parsed.type,
@@ -105,9 +106,20 @@ export async function installCommand(args: string[], options: InstallOptions): P
 				return;
 			}
 
-			process.stdout.write(
-				`Installed skill "${name}" from GitHub into ${options.local ? "local" : "global"} registry.\n`,
-			);
+			if (installed.length === 1) {
+				process.stdout.write(
+					`Installed skill "${names[0]}" from GitHub into ${scopeLabel} registry.\n`,
+				);
+			} else {
+				process.stdout.write(
+					`Installed ${installed.length} skills from GitHub into ${scopeLabel} registry:\n`,
+				);
+				for (const name of names) process.stdout.write(`  - ${name}\n`);
+			}
+			if (skipped.length > 0) {
+				process.stdout.write(`Skipped ${skipped.length}:\n`);
+				for (const s of skipped) process.stdout.write(`  - ${s.name}: ${s.reason}\n`);
+			}
 			return;
 		}
 
