@@ -180,8 +180,12 @@ export async function installFromGithub(
 		const downloadedDir = await downloadGithubSource(gigetSource, tempDir);
 		const repoRoot = path.resolve(downloadedDir);
 
-		// Try parsing at root first
-		const parsed = parseSkill(repoRoot, "local");
+		// Try parsing at root first. Skip the dirname-equals-frontmatter-name
+		// check during pre-install — the destination dir is named per
+		// frontmatter.name below, so the invariant holds post-install even when
+		// the upstream repo used a different folder name.
+		const parseOpts = { enforceDirName: false } as const;
+		const parsed = parseSkill(repoRoot, "local", parseOpts);
 		let candidates: string[];
 
 		if (parsed.ok) {
@@ -204,7 +208,7 @@ export async function installFromGithub(
 		const skipped: { name: string; reason: string }[] = [];
 
 		for (const candidateDir of candidates) {
-			const parsedSkill = parseSkill(candidateDir, "local");
+			const parsedSkill = parseSkill(candidateDir, "local", parseOpts);
 			if (!parsedSkill.ok) {
 				skipped.push({
 					name: path.relative(repoRoot, candidateDir) || "<root>",
