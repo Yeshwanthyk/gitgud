@@ -5,7 +5,7 @@ import { getAllSkills } from "../core/skills";
 import { formatError } from "../output";
 import type { OutputFormat, Skill } from "../types";
 
-export type SearchOptions = {
+type SearchOptions = {
 	format: OutputFormat;
 };
 
@@ -14,7 +14,7 @@ type LineMatch = {
 	text: string;
 };
 
-export type SearchResult = {
+type SearchResult = {
 	skill: Skill;
 	matchedName: boolean;
 	matchedDescription: boolean;

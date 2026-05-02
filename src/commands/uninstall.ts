@@ -5,7 +5,7 @@ import { getGlobalSkillsDir, getLocalSkillsDir } from "../core/paths";
 import { formatError } from "../output";
 import type { OutputFormat } from "../types";
 
-export type UninstallOptions = {
+type UninstallOptions = {
 	local: boolean;
 	format: OutputFormat;
 };
@@ -34,7 +34,7 @@ export function uninstallCommand(args: string[], options: UninstallOptions): voi
 		const stats = statSync(targetPath);
 		if (!stats.isDirectory()) {
 			process.stderr.write(
-				`${formatError(`Skill path is not a directory: ${targetPath}`, options.format)}\n`,
+				`${formatError(`Skill path is not a directory: ${targetPath}`, options.format)}\n`
 			);
 			process.exit(1);
 		}
@@ -43,7 +43,7 @@ export function uninstallCommand(args: string[], options: UninstallOptions): voi
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unknown remove error";
 		process.stderr.write(
-			`${formatError(`Failed to uninstall skill: ${message}`, options.format)}\n`,
+			`${formatError(`Failed to uninstall skill: ${message}`, options.format)}\n`
 		);
 		process.exit(1);
 	}
@@ -58,13 +58,13 @@ export function uninstallCommand(args: string[], options: UninstallOptions): voi
 					path: targetPath,
 				},
 				null,
-				2,
-			)}\n`,
+				2
+			)}\n`
 		);
 		return;
 	}
 
 	process.stdout.write(
-		`Uninstalled skill "${name}" from ${options.local ? "local" : "global"} registry.\n`,
+		`Uninstalled skill "${name}" from ${options.local ? "local" : "global"} registry.\n`
 	);
 }

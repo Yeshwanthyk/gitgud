@@ -11,7 +11,7 @@ const err = <T = never>(error: Error): Result<T> => ({
 	error,
 });
 
-export type InstallFromLocalOptions = {
+type InstallFromLocalOptions = {
 	sourcePath: string;
 	targetDir: string;
 };
@@ -57,7 +57,7 @@ export function installFromLocal(options: InstallFromLocalOptions): Result<strin
 		writeFileSync(
 			path.join(destDir, ".gitgud-meta.json"),
 			`${JSON.stringify(meta, null, 2)}\n`,
-			"utf8",
+			"utf8"
 		);
 	} catch (error) {
 		rmSync(destDir, { recursive: true, force: true });

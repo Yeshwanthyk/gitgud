@@ -5,7 +5,7 @@ import { resolveSkill } from "../core/skills";
 import { formatError, formatSkillDetail } from "../output";
 import type { OutputFormat } from "../types";
 
-export type ShowOptions = {
+type ShowOptions = {
 	name?: string | undefined;
 	format: OutputFormat;
 };

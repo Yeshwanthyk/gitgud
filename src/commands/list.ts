@@ -3,7 +3,7 @@ import { getAllSkills, scanSkillsDir } from "../core/skills";
 import { formatSkillList } from "../output";
 import type { OutputFormat, Skill } from "../types";
 
-export type ListOptions = {
+type ListOptions = {
 	format: OutputFormat;
 	local: boolean;
 	global: boolean;

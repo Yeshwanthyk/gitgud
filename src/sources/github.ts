@@ -11,7 +11,7 @@ import { parseSource } from "./parse";
 const ok = <T>(value: T): Result<T> => ({ ok: true, value });
 const err = <T = never>(error: Error): Result<T> => ({ ok: false, error });
 
-export type InstallFromGithubOptions = {
+type InstallFromGithubOptions = {
 	url: string;
 	subpath?: string | undefined;
 	targetDir: string;
@@ -19,7 +19,7 @@ export type InstallFromGithubOptions = {
 
 function normalizeGithubSource(
 	inputUrl: string,
-	subpath?: string,
+	subpath?: string
 ): Result<{
 	gigetSource: string;
 	metaSource: string;
@@ -59,7 +59,7 @@ function runTarExtract(archivePath: string, extractDir: string): Promise<void> {
 			stdio: "pipe",
 		});
 		let stderr = "";
-		child.stderr.on("data", (chunk) => {
+		child.stderr.on("data", (chunk: Buffer) => {
 			stderr += chunk.toString();
 		});
 		child.on("error", (error) => reject(error));
@@ -130,7 +130,8 @@ async function downloadGithubSource(gigetSource: string, tempDir: string): Promi
 	const owner = parts[0] as string;
 	const repo = parts[1] as string;
 	const subdir = parts.slice(2).join("/");
-	const ref = refRaw?.trim() || "HEAD";
+	const trimmedRef = refRaw?.trim();
+	const ref = trimmedRef && trimmedRef.length > 0 ? trimmedRef : "HEAD";
 
 	const tarUrl = `https://codeload.github.com/${owner}/${repo}/tar.gz/${ref}`;
 	const res = await fetch(tarUrl, {
@@ -162,7 +163,7 @@ export interface GithubInstallResult {
 }
 
 export async function installFromGithub(
-	options: InstallFromGithubOptions,
+	options: InstallFromGithubOptions
 ): Promise<Result<GithubInstallResult>> {
 	const normalized = normalizeGithubSource(options.url, options.subpath);
 	if (!normalized.ok) return err(normalized.error);
@@ -197,7 +198,7 @@ export async function installFromGithub(
 			if (candidates.length === 0) {
 				throw new Error(
 					"No SKILL.md found in repository. Expected at root or in a subdirectory.\n" +
-						"Hint: Use a URL with subpath like: https://github.com/user/repo/tree/main/path/to/skill",
+						"Hint: Use a URL with subpath like: https://github.com/user/repo/tree/main/path/to/skill"
 				);
 			}
 		}

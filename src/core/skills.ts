@@ -16,7 +16,7 @@ const err = <T = never>(error: Error): Result<T> => ({
 	error,
 });
 
-export type ParseSkillOptions = {
+type ParseSkillOptions = {
 	/**
 	 * Enforce that the directory basename matches the frontmatter name.
 	 * On for installed skills (default). Off for pre-install parsing where
@@ -29,7 +29,7 @@ export type ParseSkillOptions = {
 export function parseSkill(
 	skillPath: string,
 	scope: Scope,
-	options: ParseSkillOptions = {},
+	options: ParseSkillOptions = {}
 ): Result<Skill> {
 	const { enforceDirName = true } = options;
 	const absoluteSkillPath = path.resolve(skillPath);
@@ -67,8 +67,8 @@ export function parseSkill(
 	if (enforceDirName && dirName !== frontmatter.name) {
 		return err(
 			new Error(
-				`Frontmatter name must match directory name: dir=${dirName} name=${frontmatter.name}`,
-			),
+				`Frontmatter name must match directory name: dir=${dirName} name=${frontmatter.name}`
+			)
 		);
 	}
 

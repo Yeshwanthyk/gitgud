@@ -51,8 +51,8 @@ function compareVersions(current: string, latest: string): number {
 	const l = latest.replace(/^v/, "").split(".").map(Number);
 
 	for (let i = 0; i < Math.max(c.length, l.length); i++) {
-		const cv = c[i] || 0;
-		const lv = l[i] || 0;
+		const cv = c[i] ?? 0;
+		const lv = l[i] ?? 0;
 		if (cv < lv) return -1;
 		if (cv > lv) return 1;
 	}
@@ -64,17 +64,12 @@ function getCurrentBinaryPath(): string {
 
 	if (binaryPath.includes("bun") || binaryPath.includes("node")) {
 		throw new Error(
-			"Cannot self-update when running via bun/node. Use: curl -fsSL https://raw.githubusercontent.com/Yeshwanthyk/gitgud/main/install.sh | bash",
+			"Cannot self-update when running via bun/node. Use: curl -fsSL https://raw.githubusercontent.com/Yeshwanthyk/gitgud/main/install.sh | bash"
 		);
 	}
 
 	return binaryPath;
 }
-
-export type UpdateOptions = {
-	skillsOnly?: boolean;
-	binaryOnly?: boolean;
-};
 
 async function readSkillMeta(skillPath: string): Promise<SkillMeta | null> {
 	const metaPath = path.join(skillPath, ".gitgud-meta.json");
