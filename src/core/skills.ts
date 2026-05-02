@@ -4,7 +4,7 @@ import path from "node:path";
 import type { Result, Scope, Skill } from "../types";
 import { parseFrontmatter } from "./frontmatter";
 import {
-	getClaudeSkillsDir,
+	getAgentSkillsDirs,
 	getGlobalSkillsDir,
 	getLocalClaudeSkillsDir,
 	getLocalSkillsDir,
@@ -100,16 +100,16 @@ export function scanSkillsDir(dir: string, scope: Scope): Skill[] {
 export function getAllSkills(): Skill[] {
 	const localClaudeDir = getLocalClaudeSkillsDir();
 	const localGitgudDir = getLocalSkillsDir();
-	const globalClaudeDir = getClaudeSkillsDir();
 	const globalGitgudDir = getGlobalSkillsDir();
+	const agentDirs = getAgentSkillsDirs(); // claude, codex, pi (global)
 
 	// Precedence order (last wins in loop, so list lowest-to-highest):
-	// 4. global .claude - Claude Code defaults (lowest)
-	// 3. local .claude - project Claude skills
-	// 2. global .gitgud - user overrides
-	// 1. local .gitgud - project overrides (highest)
+	//   global agent dirs (claude/codex/pi) - lowest
+	//   local .claude - project Claude skills
+	//   global .gitgud - user overrides
+	//   local .gitgud - project overrides (highest)
 	const dirs: Array<{ dir: string | null; scope: Scope }> = [
-		{ dir: globalClaudeDir, scope: "global" },
+		...agentDirs.map(({ dir }) => ({ dir, scope: "global" as Scope })),
 		{ dir: localClaudeDir, scope: "local" },
 		{ dir: globalGitgudDir, scope: "global" },
 		{ dir: localGitgudDir, scope: "local" },
@@ -132,19 +132,19 @@ export function getAllSkills(): Skill[] {
 export function resolveSkill(name: string): Result<Skill> {
 	const localClaudeDir = getLocalClaudeSkillsDir();
 	const localGitgudDir = getLocalSkillsDir();
-	const globalClaudeDir = getClaudeSkillsDir();
 	const globalGitgudDir = getGlobalSkillsDir();
+	const agentDirs = getAgentSkillsDirs(); // claude, codex, pi (global)
 
 	// Precedence order (first match wins, so list highest-to-lowest):
-	// 1. local .gitgud - project overrides (highest)
-	// 2. global .gitgud - user overrides
-	// 3. local .claude - project Claude skills
-	// 4. global .claude - Claude Code defaults (lowest)
+	//   local .gitgud - project overrides (highest)
+	//   global .gitgud - user overrides
+	//   local .claude - project Claude skills
+	//   global agent dirs (claude/codex/pi) - tool defaults
 	const dirs: Array<{ dir: string | null; scope: Scope }> = [
 		{ dir: localGitgudDir, scope: "local" },
 		{ dir: globalGitgudDir, scope: "global" },
 		{ dir: localClaudeDir, scope: "local" },
-		{ dir: globalClaudeDir, scope: "global" },
+		...agentDirs.map(({ dir }) => ({ dir, scope: "global" as Scope })),
 	];
 
 	for (const entry of dirs) {

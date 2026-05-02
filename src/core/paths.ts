@@ -16,6 +16,27 @@ export function getClaudeSkillsDir(): string {
 	return path.join(home, ".claude", "skills");
 }
 
+export function getCodexSkillsDir(): string {
+	// biome-ignore lint/complexity/useLiteralKeys: TS requires bracket notation for index signatures
+	const home = process.env["HOME"] || os.homedir();
+	return path.join(home, ".codex", "skills");
+}
+
+export function getPiSkillsDir(): string {
+	// biome-ignore lint/complexity/useLiteralKeys: TS requires bracket notation for index signatures
+	const home = process.env["HOME"] || os.homedir();
+	return path.join(home, ".pi", "agent", "skills");
+}
+
+/** Global skill dirs for known agent CLIs, in fallback order. */
+export function getAgentSkillsDirs(): { name: string; dir: string }[] {
+	return [
+		{ name: "claude", dir: getClaudeSkillsDir() },
+		{ name: "codex", dir: getCodexSkillsDir() },
+		{ name: "pi", dir: getPiSkillsDir() },
+	];
+}
+
 export function getGlobalSkillsDir(): string {
 	return path.join(getGlobalDir(), "skills");
 }
