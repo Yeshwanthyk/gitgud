@@ -61,15 +61,19 @@ function compareVersions(current: string, latest: string): number {
 }
 
 function getCurrentBinaryPath(): string {
-	const binaryPath = process.argv[0] ?? "";
+	// Inside a `bun build --compile` standalone binary, process.argv[0] is the
+	// literal string "bun" (the embedded runtime name), not a path. The actual
+	// on-disk path lives on process.execPath, which is what we need to swap.
+	const execPath = process.execPath;
+	const basename = path.basename(execPath);
 
-	if (binaryPath.includes("bun") || binaryPath.includes("node")) {
+	if (basename === "bun" || basename === "node") {
 		throw new Error(
 			"Cannot self-update when running via bun/node. Use: curl -fsSL https://raw.githubusercontent.com/Yeshwanthyk/gitgud/main/install.sh | bash"
 		);
 	}
 
-	return binaryPath;
+	return execPath;
 }
 
 async function readSkillMeta(skillPath: string): Promise<SkillMeta | null> {

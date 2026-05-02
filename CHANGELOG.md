@@ -2,6 +2,12 @@
 
 All notable changes to gitgud will be documented in this file.
 
+## [0.0.10] - 2026-05-02
+
+### Fixed
+
+- **`gitgud update`** no longer false-positives "Cannot self-update when running via bun/node" on the standalone compiled binary. Inside a `bun build --compile` binary, `process.argv[0]` is the literal string `"bun"`, not a path — the check now uses `process.execPath` to resolve the actual on-disk binary path.
+
 ## [0.0.9] - 2026-05-02
 
 ### Added
