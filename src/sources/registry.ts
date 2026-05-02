@@ -1,8 +1,5 @@
-import type { Result } from "../types";
+import { err, ok, type Result } from "../types";
 import { type GithubInstallResult, installFromGithub } from "./github";
-
-const ok = <T>(value: T): Result<T> => ({ ok: true, value });
-const err = <T = never>(error: Error): Result<T> => ({ ok: false, error });
 
 type InstallFromRegistryOptions = {
 	identifier: string;

@@ -1,9 +1,6 @@
 import { parse as parseYaml } from "yaml";
 
-import type { Result, SkillFrontmatter } from "../types";
-
-const ok = <T>(value: T): Result<T> => ({ ok: true, value });
-const err = <T = never>(error: Error): Result<T> => ({ ok: false, error });
+import { err, ok, type Result, type SkillFrontmatter } from "../types";
 
 const FRONTMATTER_REGEX = /^---\s*\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n|$)/;
 // Spec: lowercase letters/numbers/hyphens, no leading/trailing hyphen, no consecutive hyphens

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
-import type { Result, Scope, Skill } from "../types";
+import { err, ok, type Result, type Scope, type Skill } from "../types";
 import { parseFrontmatter } from "./frontmatter";
 import {
 	getAgentSkillsDirs,
@@ -9,12 +9,6 @@ import {
 	getLocalClaudeSkillsDir,
 	getLocalSkillsDir,
 } from "./paths";
-
-const ok = <T>(value: T): Result<T> => ({ ok: true, value });
-const err = <T = never>(error: Error): Result<T> => ({
-	ok: false,
-	error,
-});
 
 type ParseSkillOptions = {
 	/**

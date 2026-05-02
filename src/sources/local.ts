@@ -3,13 +3,7 @@ import path from "node:path";
 
 import { ensureDir } from "../core/paths";
 import { parseSkill } from "../core/skills";
-import type { Result, SkillMeta } from "../types";
-
-const ok = <T>(value: T): Result<T> => ({ ok: true, value });
-const err = <T = never>(error: Error): Result<T> => ({
-	ok: false,
-	error,
-});
+import { err, ok, type Result, type SkillMeta } from "../types";
 
 type InstallFromLocalOptions = {
 	sourcePath: string;

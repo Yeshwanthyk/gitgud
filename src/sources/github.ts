@@ -5,11 +5,8 @@ import os from "node:os";
 import path from "node:path";
 
 import { parseSkill } from "../core/skills";
-import type { Result, SkillMeta } from "../types";
+import { err, ok, type Result, type SkillMeta } from "../types";
 import { parseSource } from "./parse";
-
-const ok = <T>(value: T): Result<T> => ({ ok: true, value });
-const err = <T = never>(error: Error): Result<T> => ({ ok: false, error });
 
 type InstallFromGithubOptions = {
 	url: string;
