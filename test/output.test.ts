@@ -15,13 +15,20 @@ const makeSkill = (overrides: Partial<Skill> = {}): Skill => ({
 });
 
 describe("formatSkillList", () => {
-	it("formats text list with name, scope, description", () => {
+	it("formats text list with header and aligned rows", () => {
 		const skills = [
 			makeSkill({ name: "a", scope: "local", description: "A skill" }),
-			makeSkill({ name: "b", scope: "global", description: "B skill" }),
+			makeSkill({ name: "bb", scope: "global", description: "B skill" }),
 		];
 
-		expect(formatSkillList(skills, "text")).toBe("a (local) - A skill\nb (global) - B skill");
+		// Strip ANSI so the test passes regardless of TTY detection.
+		const stripAnsi = (s: string): string => s.replace(/\x1b\[[0-9;]*m/g, "");
+		const output = stripAnsi(formatSkillList(skills, "text"));
+		expect(output).toContain("2 skills");
+		expect(output).toContain("local 1");
+		expect(output).toContain("global 1");
+		expect(output).toContain("a   A skill");
+		expect(output).toContain("bb  B skill");
 	});
 
 	it("formats json list as array", () => {

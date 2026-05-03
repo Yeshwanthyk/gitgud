@@ -2,6 +2,12 @@
 
 All notable changes to gitgud will be documented in this file.
 
+## [0.0.12] - 2026-05-02
+
+### Changed
+
+- **`gitgud list` output**: replaced the wrapping `name (scope) - description` line with a compact two-column layout. Adds a header summary (`N skills · local X · global Y`), color-codes names by scope (blue local, pink global), aligns names to the longest entry (capped at 30 chars), and truncates descriptions to fit the terminal width. Colors auto-disable when piped or when `NO_COLOR` is set. `json` and `robot` formats are unchanged.
+
 ## [0.0.11] - 2026-05-02
 
 ### Changed

@@ -1,6 +1,32 @@
 import path from "node:path";
 import type { OutputFormat, Skill } from "./types";
 
+const useColor = (): boolean =>
+	process.stdout.isTTY === true &&
+	!process.env["NO_COLOR"] &&
+	process.env["TERM"] !== "dumb";
+
+const paint = (code: string, text: string): string =>
+	useColor() ? `\x1b[${code}m${text}\x1b[0m` : text;
+
+const dim = (text: string): string => paint("2", text);
+const blue = (text: string): string => paint("38;5;111", text);
+const pink = (text: string): string => paint("38;5;211", text);
+
+const MAX_NAME_WIDTH = 30;
+const MIN_DESC_WIDTH = 20;
+
+function termWidth(): number {
+	const cols = process.stdout.columns;
+	return typeof cols === "number" && cols > 0 ? cols : 100;
+}
+
+function truncate(text: string, max: number): string {
+	if (max <= 1) return text.slice(0, Math.max(0, max));
+	const clean = text.replace(/\s+/g, " ").trim();
+	return clean.length <= max ? clean : `${clean.slice(0, max - 1)}…`;
+}
+
 export function formatSkillList(skills: Skill[], format: OutputFormat): string {
 	if (format === "json") {
 		return JSON.stringify(skills, null, 2);
@@ -11,7 +37,32 @@ export function formatSkillList(skills: Skill[], format: OutputFormat): string {
 		return skills.map((skill) => `${skill.name}\t${path.join(skill.path, "SKILL.md")}`).join("\n");
 	}
 
-	return skills.map((skill) => `${skill.name} (${skill.scope}) - ${skill.description}`).join("\n");
+	if (skills.length === 0) return "";
+
+	const localCount = skills.filter((s) => s.scope === "local").length;
+	const globalCount = skills.length - localCount;
+
+	const nameWidth = Math.min(
+		MAX_NAME_WIDTH,
+		skills.reduce((max, s) => Math.max(max, s.name.length), 0)
+	);
+
+	const width = termWidth();
+	const descWidth = Math.max(MIN_DESC_WIDTH, width - nameWidth - 2);
+
+	const headerParts = [`${skills.length} skills`];
+	if (localCount > 0) headerParts.push(`${blue("local")} ${localCount}`);
+	if (globalCount > 0) headerParts.push(`${pink("global")} ${globalCount}`);
+	const header = dim(headerParts.join(" · "));
+
+	const rows = skills.map((skill) => {
+		const color = skill.scope === "local" ? blue : pink;
+		const displayName = truncate(skill.name, nameWidth);
+		const pad = " ".repeat(Math.max(0, nameWidth - displayName.length));
+		return `${color(displayName)}${pad}  ${truncate(skill.description, descWidth)}`;
+	});
+
+	return `${header}\n\n${rows.join("\n")}`;
 }
 
 export function formatSkillDetail(
