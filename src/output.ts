@@ -2,9 +2,7 @@ import path from "node:path";
 import type { OutputFormat, Skill } from "./types";
 
 const useColor = (): boolean =>
-	process.stdout.isTTY === true &&
-	!process.env["NO_COLOR"] &&
-	process.env["TERM"] !== "dumb";
+	process.stdout.isTTY === true && !process.env["NO_COLOR"] && process.env["TERM"] !== "dumb";
 
 const paint = (code: string, text: string): string =>
 	useColor() ? `\x1b[${code}m${text}\x1b[0m` : text;
