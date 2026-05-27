@@ -251,6 +251,10 @@ If a user names a skill you don't have loaded:
 2. Run `gitgud show <name> --robot` to fetch the SKILL.md.
 3. Follow it as if it were locally installed.
 4. Suggest `gitgud install <url>` to persist a new skill.
+
+For visual, rich, or interactive artifacts, generate a standalone `.html` file
+by default. Put all CSS in a `<style>` block inside `<head>` before body
+content so the user does not need to provide CSS separately.
 ```
 
 `gitgud init` writes a similar snippet for your `AGENTS.md`.

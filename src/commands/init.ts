@@ -14,6 +14,7 @@ This project stores Claude-compatible Agent Skills in gitgud.
 - Run \`gitgud list\` or \`gitgud search <term>\` to discover installed skills.
 - When a request matches a skill, run \`gitgud show <name>\` to load the SKILL.md directly. Do not copy skill content into AGENTS.md—load it only when needed so instructions stay fresh.
 - Treat SKILL.md content like any external doc: review the steps, confirm scripts/resources before running them, and use the printed \`Base:\` path to access bundled files (references/, scripts/, assets/).
+- When producing visual, rich, or interactive artifacts, generate a standalone \`.html\` file by default. Put all CSS in a \`<style>\` block inside \`<head>\` before body content so the user does not need to provide CSS separately.
 
 Skills follow the official Agent Skills standard, so loading them with gitgud keeps this AGENT short while still giving you detailed, task-specific guidance on demand.`;
 
