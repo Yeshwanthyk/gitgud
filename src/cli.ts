@@ -1,6 +1,8 @@
 #!/usr/bin/env bun
 import { parseArgs } from "node:util";
 
+import { exportCommand } from "./commands/export";
+import { importCommand } from "./commands/import";
 import { initCommand } from "./commands/init";
 import { installCommand } from "./commands/install";
 import { listCommand } from "./commands/list";
@@ -33,6 +35,8 @@ Commands:
   search <query>
   install <name>
   uninstall <name>
+  export <archive.tgz>  Export all skills from the gitgud registry
+  import <archive.tgz>  Import skills into the gitgud registry
   init
   sync [agent...]        Symlink ~/.gitgud/skills into Claude/Codex/Pi skill dirs
   update                 Self-update gitgud binary
@@ -47,8 +51,8 @@ Options:
   --local         Use local registry
   --global        Use global registry
   --source        Install source (for install)
-  --dry-run       Preview changes (sync)
-  --force         Replace existing non-managed entries (sync)
+  --dry-run       Preview changes (sync/import)
+  --force         Replace existing entries (sync/export/import)
   --no-prune      Don't remove dangling managed symlinks (sync)
   -v, --version   Print gitgud version
   -h, --help      Show help
@@ -143,6 +147,23 @@ async function dispatch(command: string, args: string[], options: CliOptions): P
 			uninstallCommand(args, {
 				local: options.local,
 				format: resolveOutputFormat(options),
+			});
+			return;
+		}
+		case "export": {
+			await exportCommand(args, {
+				scope: options.local ? "local" : "global",
+				format: resolveOutputFormat(options),
+				force: options.force,
+			});
+			return;
+		}
+		case "import": {
+			await importCommand(args, {
+				scope: options.local ? "local" : "global",
+				format: resolveOutputFormat(options),
+				force: options.force,
+				dryRun: options.dryRun,
 			});
 			return;
 		}

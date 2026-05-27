@@ -1,9 +1,10 @@
 import { chmodSync, createWriteStream, existsSync, renameSync, unlinkSync } from "node:fs";
-import { readFile, rm, writeFile } from "node:fs/promises";
+import { rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
 
+import { readSkillMeta } from "../core/metadata";
 import { resolveSkill } from "../core/skills";
 import { installFromGithub } from "../sources/github";
 import type { SkillMeta } from "../types";
@@ -74,17 +75,6 @@ function getCurrentBinaryPath(): string {
 	}
 
 	return execPath;
-}
-
-async function readSkillMeta(skillPath: string): Promise<SkillMeta | null> {
-	const metaPath = path.join(skillPath, ".gitgud-meta.json");
-	if (!existsSync(metaPath)) return null;
-	try {
-		const raw = await readFile(metaPath, "utf8");
-		return JSON.parse(raw) as SkillMeta;
-	} catch {
-		return null;
-	}
 }
 
 /** Re-pull a single installed skill from its `source` (github only for now). */
