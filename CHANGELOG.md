@@ -2,6 +2,12 @@
 
 All notable changes to gitgud will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- **`gitgud export` / `gitgud import`**: archive and restore every skill in the canonical gitgud registry, preserving bundled files and `.gitgud-meta.json`; imports skip existing skills by default, support `--dry-run` / `--force`, and auto-sync after global imports.
+
 ## [0.0.12] - 2026-05-02
 
 ### Changed

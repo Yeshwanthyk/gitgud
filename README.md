@@ -61,6 +61,8 @@ That's it — your skills are now visible to every supported agent.
 | `gitgud show <name>` | Print SKILL.md + base directory |
 | `gitgud install <source>` | Install from a GitHub URL, `gh:` shorthand, claude-plugins registry id, or local path |
 | `gitgud uninstall <name>` | Remove a skill (and clean up its agent symlinks) |
+| `gitgud export <archive.tgz>` | Export every skill from the gitgud registry |
+| `gitgud import <archive.tgz>` | Import skills into the gitgud registry |
 | `gitgud sync [agent...]` | Symlink `~/.gitgud/skills/` into Claude / Codex / Pi |
 | `gitgud update <name>` | Re-pull a single skill from its origin |
 | `gitgud update --skills` | Re-pull every github-sourced skill |
@@ -85,6 +87,13 @@ That's it — your skills are now visible to every supported agent.
 | `--dry-run` | Preview without touching the filesystem |
 | `--force` | Replace existing non-managed entries with symlinks |
 | `--no-prune` | Keep dangling managed symlinks (default: pruned) |
+
+**Export/import flags**
+
+| Flag | Effect |
+|---|---|
+| `--dry-run` | Preview import actions without touching the filesystem |
+| `--force` | Replace existing skills during import, or overwrite an export archive |
 
 ## Install sources
 
@@ -149,6 +158,19 @@ pi
 ```
 
 `install`, `uninstall`, and `update --skills` run sync automatically afterward, so agent dirs stay consistent without an extra step.
+
+## Export / import
+
+`gitgud export` archives the canonical gitgud registry, not synced agent directories:
+
+```bash
+gitgud export skills.tgz
+gitgud import skills.tgz
+gitgud import skills.tgz --dry-run
+gitgud import skills.tgz --force
+```
+
+Use `--local` to export or import `./.gitgud/skills/`. Global imports auto-sync into Claude, Codex, and Pi after skills are imported.
 
 ## Discovery precedence
 
