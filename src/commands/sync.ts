@@ -17,9 +17,9 @@ import { listSkillDirNames } from "../core/skills";
 import { formatError } from "../output";
 import type { OutputFormat } from "../types";
 
-type AgentName = "claude" | "codex" | "pi" | "droid";
+type AgentName = "claude" | "codex" | "pi" | "droid" | "amp";
 
-const ALL_AGENTS: AgentName[] = ["claude", "codex", "pi", "droid"];
+const ALL_AGENTS: AgentName[] = ["claude", "codex", "pi", "droid", "amp"];
 
 function isAgentName(value: string): value is AgentName {
 	return (ALL_AGENTS as string[]).includes(value);
@@ -264,7 +264,7 @@ function homify(input: string): string {
 	return input.split(home).join("~");
 }
 
-const AGENT_ORDER: AgentName[] = ["claude", "codex", "pi", "droid"];
+const AGENT_ORDER: AgentName[] = ["claude", "codex", "pi", "droid", "amp"];
 const LABEL_WIDTH = 8; // longest label is "relinked"
 
 function printAgentSection(agent: AgentName, entries: SyncEntry[]): void {

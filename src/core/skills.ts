@@ -119,10 +119,10 @@ export function getAllSkills(): Skill[] {
 	const localClaudeDir = getLocalClaudeSkillsDir();
 	const localGitgudDir = getLocalSkillsDir();
 	const globalGitgudDir = getGlobalSkillsDir();
-	const agentDirs = getAgentSkillsDirs(); // claude, codex, pi (global)
+	const agentDirs = getAgentSkillsDirs();
 
 	// Precedence order (last wins in loop, so list lowest-to-highest):
-	//   global agent dirs (claude/codex/pi) - lowest
+	//   global agent dirs - lowest
 	//   local .claude - project Claude skills
 	//   global .gitgud - user overrides
 	//   local .gitgud - project overrides (highest)
@@ -151,13 +151,13 @@ export function resolveSkill(name: string): Result<Skill> {
 	const localClaudeDir = getLocalClaudeSkillsDir();
 	const localGitgudDir = getLocalSkillsDir();
 	const globalGitgudDir = getGlobalSkillsDir();
-	const agentDirs = getAgentSkillsDirs(); // claude, codex, pi (global)
+	const agentDirs = getAgentSkillsDirs();
 
 	// Precedence order (first match wins, so list highest-to-lowest):
 	//   local .gitgud - project overrides (highest)
 	//   global .gitgud - user overrides
 	//   local .claude - project Claude skills
-	//   global agent dirs (claude/codex/pi) - tool defaults
+	//   global agent dirs - tool defaults
 	const dirs: Array<{ dir: string | null; scope: Scope }> = [
 		{ dir: localGitgudDir, scope: "local" },
 		{ dir: globalGitgudDir, scope: "global" },

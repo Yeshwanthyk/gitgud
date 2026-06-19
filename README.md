@@ -4,15 +4,17 @@
 [![Release](https://img.shields.io/github/v/release/Yeshwanthyk/gitgud)](https://github.com/Yeshwanthyk/gitgud/releases)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-**One CLI to manage Agent Skills across [Claude Code](https://docs.claude.com/en/docs/claude-code/overview), [Codex](https://developers.openai.com/codex), and [Pi](https://pi.dev).**
+**One CLI to manage Agent Skills across [Claude Code](https://docs.claude.com/en/docs/claude-code/overview), [Codex](https://developers.openai.com/codex), [Pi](https://pi.dev), [Droid](https://docs.factory.ai/cli/configuration/skills), and [Amp](https://ampcode.com/manual).**
 
-`~/.gitgud/skills/` is the canonical store. `gitgud sync` symlinks every skill into each agent's expected directory so all three CLIs see the same set automatically.
+`~/.gitgud/skills/` is the canonical store. `gitgud sync` symlinks every skill into each agent's expected directory so every supported CLI sees the same set automatically.
 
 ```
 ~/.gitgud/skills/<name>          # source of truth
   ├─ ~/.claude/skills/<name>     -> link
   ├─ ~/.codex/skills/<name>      -> link
-  └─ ~/.pi/agent/skills/<name>   -> link
+  ├─ ~/.pi/agent/skills/<name>   -> link
+  ├─ ~/.factory/skills/<name>    -> link
+  └─ ~/.config/agents/skills/<name> -> link
 ```
 
 ## Install
@@ -35,7 +37,7 @@ The shell installer drops a single, statically-compiled binary in `~/.local/bin/
 
 ```bash
 gitgud install https://github.com/owner/repo   # install all skills from a repo
-gitgud sync                                    # link them into Claude / Codex / Pi
+gitgud sync                                    # link them into Claude / Codex / Pi / Droid / Amp
 gitgud list                                    # see what's installed
 gitgud show <name>                             # print a skill's SKILL.md
 ```
@@ -49,6 +51,8 @@ That's it — your skills are now visible to every supported agent.
 | [Claude Code](https://docs.claude.com/en/docs/claude-code/overview) | `~/.claude/skills/` | Per-skill symlinks recommended; flat layout. |
 | [Codex CLI](https://developers.openai.com/codex/skills/create-skill) | `~/.codex/skills/` | Recursive discovery; supports symlinked skill directories. |
 | [Pi](https://pi.dev/docs/latest/skills) | `~/.pi/agent/skills/` | Recursive discovery; resolves real paths and dedupes. |
+| [Droid](https://docs.factory.ai/cli/configuration/skills) | `~/.factory/skills/` | Factory AI's global Droid skills directory. |
+| [Amp](https://ampcode.com/manual) | `~/.config/agents/skills/` | Amp user-wide skills directory. |
 
 `gitgud sync` only writes to agents whose parent directory already exists, so you won't get phantom directories for tools you haven't installed.
 
@@ -63,7 +67,7 @@ That's it — your skills are now visible to every supported agent.
 | `gitgud uninstall <name>` | Remove a skill (and clean up its agent symlinks) |
 | `gitgud export <archive.tgz>` | Export every skill from the gitgud registry |
 | `gitgud import <archive.tgz>` | Import skills into the gitgud registry |
-| `gitgud sync [agent...]` | Symlink `~/.gitgud/skills/` into Claude / Codex / Pi |
+| `gitgud sync [agent...]` | Symlink `~/.gitgud/skills/` into Claude / Codex / Pi / Droid / Amp |
 | `gitgud update <name>` | Re-pull a single skill from its origin |
 | `gitgud update --skills` | Re-pull every github-sourced skill |
 | `gitgud update` | Self-update the gitgud binary |
@@ -135,7 +139,7 @@ Each installed skill records its source URL and subpath in `.gitgud-meta.json`, 
 ```bash
 gitgud sync                  # all available agents
 gitgud sync claude           # one agent
-gitgud sync codex pi         # several
+gitgud sync codex pi amp     # several
 gitgud sync --dry-run        # preview
 gitgud sync --json           # structured output
 ```
@@ -154,7 +158,10 @@ codex
 pi
   · 24 already in sync
 
-1 linked · 1 skipped · 66 noop
+amp
+  · 24 already in sync
+
+1 linked · 1 skipped · 90 noop
 ```
 
 `install`, `uninstall`, and `update --skills` run sync automatically afterward, so agent dirs stay consistent without an extra step.
@@ -170,7 +177,7 @@ gitgud import skills.tgz --dry-run
 gitgud import skills.tgz --force
 ```
 
-Use `--local` to export or import `./.gitgud/skills/`. Global imports auto-sync into Claude, Codex, and Pi after skills are imported.
+Use `--local` to export or import `./.gitgud/skills/`. Global imports auto-sync into Claude, Codex, Pi, Droid, and Amp after skills are imported.
 
 ## Discovery precedence
 
@@ -184,6 +191,8 @@ Use `--local` to export or import `./.gitgud/skills/`. Global imports auto-sync 
 | 4 | `~/.claude/skills/` | Claude Code |
 | 5 | `~/.codex/skills/` | Codex |
 | 6 | `~/.pi/agent/skills/` | Pi |
+| 7 | `~/.factory/skills/` | Droid |
+| 8 | `~/.config/agents/skills/` | Amp |
 
 ## Frontmatter contract
 

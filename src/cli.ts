@@ -49,7 +49,7 @@ Commands:
   export <archive.tgz>  Export all skills from the gitgud registry
   import <archive.tgz>  Import skills into the gitgud registry
   init
-  sync [agent...]        Symlink ~/.gitgud/skills into Claude/Codex/Pi/Droid skill dirs
+  sync [agent...]        Symlink ~/.gitgud/skills into Claude/Codex/Pi/Droid/Amp skill dirs
   update [source]        Refresh tracked GitHub sources
   self-update            Self-update gitgud binary
   version                Print gitgud version

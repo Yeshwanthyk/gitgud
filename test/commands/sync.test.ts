@@ -40,6 +40,7 @@ describe("sync command", () => {
 		mkdirSync(path.join(tmpHome, ".claude"), { recursive: true });
 		mkdirSync(path.join(tmpHome, ".codex"), { recursive: true });
 		mkdirSync(path.join(tmpHome, ".pi", "agent"), { recursive: true });
+		mkdirSync(path.join(tmpHome, ".config", "agents"), { recursive: true });
 	});
 
 	afterEach(() => {
@@ -54,7 +55,12 @@ describe("sync command", () => {
 
 		runSync({ dryRun: false, force: false, prune: true, format: "text", silent: true });
 
-		for (const agent of [".claude/skills", ".codex/skills", ".pi/agent/skills"]) {
+		for (const agent of [
+			".claude/skills",
+			".codex/skills",
+			".pi/agent/skills",
+			".config/agents/skills",
+		]) {
 			for (const skill of ["alpha", "beta"]) {
 				const dest = path.join(tmpHome, agent, skill);
 				expect(lstatSync(dest).isSymbolicLink()).toBeTrue();
@@ -88,6 +94,7 @@ describe("sync command", () => {
 		expect(existsSync(path.join(tmpHome, ".claude", "skills", "alpha"))).toBeTrue();
 		expect(existsSync(path.join(tmpHome, ".codex", "skills", "alpha"))).toBeFalse();
 		expect(existsSync(path.join(tmpHome, ".pi", "agent", "skills", "alpha"))).toBeFalse();
+		expect(existsSync(path.join(tmpHome, ".config", "agents", "skills", "alpha"))).toBeFalse();
 	});
 
 	test("does not overwrite a non-managed real directory", () => {
