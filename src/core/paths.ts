@@ -27,6 +27,18 @@ export function getGlobalSkillsDir(): string {
 	return path.join(getGlobalDir(), "skills");
 }
 
+function getGlobalProfilePath(): string {
+	return path.join(getGlobalDir(), "profile.json");
+}
+
+function getGlobalLockfilePath(): string {
+	return path.join(getGlobalDir(), "gitgud.lock.json");
+}
+
+function getGlobalCacheDir(): string {
+	return path.join(getGlobalDir(), "cache");
+}
+
 export function getLocalClaudeSkillsDir(startDir: string = process.cwd()): string | null {
 	let current = path.resolve(startDir);
 
@@ -70,9 +82,39 @@ export function getLocalSkillsDir(startDir: string = process.cwd()): string | nu
 	return localDir ? path.join(localDir, "skills") : null;
 }
 
+function getLocalProfilePath(startDir: string = process.cwd()): string | null {
+	const localDir = getLocalDir(startDir);
+	return localDir ? path.join(localDir, "profile.json") : null;
+}
+
+function getLocalLockfilePath(startDir: string = process.cwd()): string | null {
+	const localDir = getLocalDir(startDir);
+	return localDir ? path.join(localDir, "gitgud.lock.json") : null;
+}
+
+function getLocalCacheDir(startDir: string = process.cwd()): string | null {
+	const localDir = getLocalDir(startDir);
+	return localDir ? path.join(localDir, "cache") : null;
+}
+
 export function getSkillsDir(scope: Scope, startDir: string = process.cwd()): string | null {
 	if (scope === "global") return getGlobalSkillsDir();
 	return getLocalSkillsDir(startDir);
+}
+
+export function getProfilePath(scope: Scope, startDir: string = process.cwd()): string | null {
+	if (scope === "global") return getGlobalProfilePath();
+	return getLocalProfilePath(startDir);
+}
+
+export function getLockfilePath(scope: Scope, startDir: string = process.cwd()): string | null {
+	if (scope === "global") return getGlobalLockfilePath();
+	return getLocalLockfilePath(startDir);
+}
+
+export function getCacheDir(scope: Scope, startDir: string = process.cwd()): string | null {
+	if (scope === "global") return getGlobalCacheDir();
+	return getLocalCacheDir(startDir);
 }
 
 export function ensureDir(dir: string): void {

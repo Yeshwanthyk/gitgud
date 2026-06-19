@@ -2,8 +2,9 @@ import path from "node:path";
 
 import { getGlobalSkillsDir, getLocalSkillsDir } from "../core/paths";
 import { formatError } from "../output";
+import { addCommand } from "./add";
 import { autoSync } from "./sync";
-import { type GithubInstallResult, installFromGithub } from "../sources/github";
+import type { GithubInstallResult } from "../sources/github";
 import { installFromLocal } from "../sources/local";
 import { parseSource } from "../sources/parse";
 import { installFromRegistry } from "../sources/registry";
@@ -127,23 +128,10 @@ export async function installCommand(args: string[], options: InstallOptions): P
 			}
 
 			case "github": {
-				const url = `github:${parsed.repo}${parsed.subdir ? `/${parsed.subdir}` : ""}${parsed.ref ? `#${parsed.ref}` : ""}`;
-				const res = await installFromGithub({
-					url,
-					targetDir,
-				});
-				if (!res.ok) fail(res.error.message, options.format);
-
-				printRemoteInstallOutput({
-					result: res.value,
-					sourceType: parsed.type,
-					originLabel: "GitHub",
+				await addCommand([sourceInput], {
+					scope: options.local ? "local" : "global",
 					format: options.format,
-					scopeLabel,
-					targetDir,
-					sourceInput,
 				});
-				if (!options.local) autoSync();
 				return;
 			}
 

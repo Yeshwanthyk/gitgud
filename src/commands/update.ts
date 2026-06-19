@@ -1,13 +1,11 @@
-import { chmodSync, createWriteStream, existsSync, renameSync, unlinkSync } from "node:fs";
-import { rm, writeFile } from "node:fs/promises";
+import { chmodSync, createWriteStream, renameSync, unlinkSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
 
-import { readSkillMeta } from "../core/metadata";
-import { resolveSkill } from "../core/skills";
-import { installFromGithub } from "../sources/github";
-import type { SkillMeta } from "../types";
+import { materialize } from "../core/materialize";
+import { refreshProfileSources } from "../core/source-manager";
+import type { OutputFormat, Scope } from "../types";
 import { VERSION } from "../version";
 import { autoSync } from "./sync";
 
@@ -77,84 +75,38 @@ function getCurrentBinaryPath(): string {
 	return execPath;
 }
 
-/** Re-pull a single installed skill from its `source` (github only for now). */
-async function updateSkill(name: string): Promise<{ ok: boolean; message: string }> {
-	const resolved = resolveSkill(name);
-	if (!resolved.ok) {
-		return { ok: false, message: `${name}: ${resolved.error.message}` };
-	}
+export async function updateSourcesCommand(
+	args: string[],
+	options: { scope: Scope; format: OutputFormat }
+): Promise<void> {
+	try {
+		const results = await refreshProfileSources(options.scope, args);
+		const materialized = await materialize(options.scope);
+		if (options.scope === "global") autoSync();
 
-	const skillPath = resolved.value.path;
-	const meta = await readSkillMeta(skillPath);
-	if (!meta) {
-		return {
-			ok: false,
-			message: `${name}: no .gitgud-meta.json (not installed via gitgud, can't update)`,
-		};
-	}
-	if (!meta.source.startsWith("github:")) {
-		return { ok: false, message: `${name}: unsupported source ${meta.source}` };
-	}
-
-	const targetDir = path.dirname(skillPath);
-	await rm(skillPath, { recursive: true, force: true });
-
-	const res = await installFromGithub({ url: meta.source, targetDir });
-	if (!res.ok) {
-		return { ok: false, message: `${name}: ${res.error.message}` };
-	}
-
-	// Refresh installedAt while preserving original source/subpath.
-	for (const installedPath of res.value.installed) {
-		const freshMetaPath = path.join(installedPath, ".gitgud-meta.json");
-		const freshMeta: SkillMeta = {
-			source: meta.source,
-			installedAt: new Date().toISOString(),
-		};
-		if (meta.subpath) freshMeta.subpath = meta.subpath;
-		await writeFile(freshMetaPath, JSON.stringify(freshMeta, null, 2), "utf8");
-	}
-
-	return { ok: true, message: `${name}: updated from ${meta.source}` };
-}
-
-export async function updateSkillsCommand(names: string[]): Promise<void> {
-	let targets = names;
-	if (targets.length === 0) {
-		// Default: every skill in ~/.gitgud/skills with a github source.
-		const { getGlobalSkillsDir } = await import("../core/paths");
-		const { readdirSync, statSync } = await import("node:fs");
-		const dir = getGlobalSkillsDir();
-		if (!existsSync(dir)) {
-			console.log("No installed skills to update.");
+		if (options.format === "json") {
+			process.stdout.write(`${JSON.stringify({ ok: true, results, materialized }, null, 2)}\n`);
 			return;
 		}
-		targets = readdirSync(dir).filter((entry) => {
-			const full = path.join(dir, entry);
-			try {
-				if (!statSync(full).isDirectory()) return false;
-			} catch {
-				return false;
-			}
-			return existsSync(path.join(full, ".gitgud-meta.json"));
-		});
-		if (targets.length === 0) {
-			console.log("No installed skills with origin metadata to update.");
-			return;
-		}
-	}
 
-	let failures = 0;
-	for (const name of targets) {
-		const result = await updateSkill(name);
-		console.log(`${result.ok ? "\u2713" : "\u2717"} ${result.message}`);
-		if (!result.ok) failures++;
+		for (const result of results) {
+			const counts = result.entries.reduce<Record<string, number>>((acc, entry) => {
+				acc[entry.change] = (acc[entry.change] ?? 0) + 1;
+				return acc;
+			}, {});
+			const summary = Object.entries(counts)
+				.map(([change, count]) => `${count} ${change}`)
+				.join(", ");
+			process.stdout.write(`Updated ${result.source.id}${summary ? ` (${summary})` : ""}.\n`);
+		}
+	} catch (error) {
+		const message = error instanceof Error ? error.message : "Unknown update error";
+		process.stderr.write(`${message}\n`);
+		process.exit(1);
 	}
-	autoSync();
-	if (failures > 0) process.exit(1);
 }
 
-export async function updateCommand(): Promise<void> {
+export async function selfUpdateCommand(): Promise<void> {
 	console.log(`Current version: v${VERSION}`);
 	console.log("Checking for updates...\n");
 

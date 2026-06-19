@@ -1,16 +1,21 @@
 #!/usr/bin/env bun
 import { parseArgs } from "node:util";
 
+import { addCommand } from "./commands/add";
+import { applyCommand } from "./commands/apply";
 import { exportCommand } from "./commands/export";
 import { importCommand } from "./commands/import";
 import { initCommand } from "./commands/init";
 import { installCommand } from "./commands/install";
 import { listCommand } from "./commands/list";
+import { profileCommand } from "./commands/profile";
 import { searchCommand } from "./commands/search";
+import { selectCommand } from "./commands/select";
 import { show } from "./commands/show";
+import { statusCommand } from "./commands/status";
 import { syncCommand } from "./commands/sync";
 import { uninstallCommand } from "./commands/uninstall";
-import { updateCommand, updateSkillsCommand } from "./commands/update";
+import { selfUpdateCommand, updateSourcesCommand } from "./commands/update";
 import type { OutputFormat, Scope } from "./types";
 import { VERSION } from "./version";
 
@@ -33,15 +38,20 @@ Commands:
   list
   show <name>
   search <query>
+  add <github-url>      Track a GitHub skill source and select enabled skills
+  select [source]       Toggle enabled skills
+  status                Show tracked skill state
+  apply                 Materialize selected skills, then sync
   install <name>
   uninstall <name>
+  profile export <file> Export profile + lockfile
+  profile apply <file>  Apply profile + lockfile
   export <archive.tgz>  Export all skills from the gitgud registry
   import <archive.tgz>  Import skills into the gitgud registry
   init
   sync [agent...]        Symlink ~/.gitgud/skills into Claude/Codex/Pi skill dirs
-  update                 Self-update gitgud binary
-  update <name>          Re-pull a skill from its origin
-  update --skills        Re-pull every installed skill
+  update [source]        Refresh tracked GitHub sources
+  self-update            Self-update gitgud binary
   version                Print gitgud version
 
 Options:
@@ -135,11 +145,48 @@ async function dispatch(command: string, args: string[], options: CliOptions): P
 			await searchCommand(args, { format: resolveOutputFormat(options) });
 			return;
 		}
+		case "add": {
+			await addCommand(args, {
+				scope: options.local ? "local" : "global",
+				format: resolveOutputFormat(options),
+			});
+			return;
+		}
+		case "select": {
+			await selectCommand(args, {
+				scope: options.local ? "local" : "global",
+				format: resolveOutputFormat(options),
+			});
+			return;
+		}
+		case "status": {
+			await statusCommand(args, {
+				scope: options.local ? "local" : "global",
+				format: resolveOutputFormat(options),
+			});
+			return;
+		}
+		case "apply": {
+			await applyCommand(args, {
+				scope: options.local ? "local" : "global",
+				format: resolveOutputFormat(options),
+			});
+			return;
+		}
 		case "install": {
 			await installCommand(args, {
 				source: options.source,
 				local: options.local,
 				format: resolveOutputFormat(options),
+			});
+			return;
+		}
+		case "profile": {
+			await profileCommand(args, {
+				scope: options.local ? "local" : "global",
+				format: resolveOutputFormat(options),
+				dryRun: options.dryRun,
+				force: options.force,
 			});
 			return;
 		}
@@ -181,11 +228,14 @@ async function dispatch(command: string, args: string[], options: CliOptions): P
 			return;
 		}
 		case "update": {
-			if (options.skills || args.length > 0) {
-				await updateSkillsCommand(args);
-				return;
-			}
-			await updateCommand();
+			await updateSourcesCommand(args, {
+				scope: options.local ? "local" : "global",
+				format: resolveOutputFormat(options),
+			});
+			return;
+		}
+		case "self-update": {
+			await selfUpdateCommand();
 			return;
 		}
 		case "version": {
