@@ -66,6 +66,22 @@ Options:
   --no-prune      Don't remove dangling managed symlinks (sync)
   -v, --version   Print gitgud version
   -h, --help      Show help
+
+Yesh workflows:
+  New feature:       /how -> /architect -> /plan -> /interrogate -> /ship -> /commit
+  Bug:               /status -> /debug -> /ship -> /commit
+  Unclear system:    /how -> /debug for rationale/root cause -> /architect
+  Many designs:      /architect -> /arena -> /plan
+  Long/risky work:   add "show work" to /architect, /ship, or /commit
+
+Shortest rule:
+  /how        current system
+  /debug      understand behavior, reason/root cause, or fix path
+  /architect  future shape
+  /plan       finalized execution plan
+  /ship       do it
+  /commit     record it in git
+  /show-work  reconstruct actual work and make reasoning reviewable
 `;
 
 function printHelp(): void {
