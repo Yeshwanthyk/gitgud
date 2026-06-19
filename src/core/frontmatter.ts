@@ -10,8 +10,22 @@ const MAX_COMPATIBILITY_LENGTH = 500;
 function normalizeAllowedTools(value: unknown): Result<string[] | undefined> {
 	if (value === undefined) return ok(undefined);
 
+	if (Array.isArray(value)) {
+		const parts: string[] = [];
+		for (const item of value) {
+			if (typeof item !== "string" || item.trim().length === 0) {
+				return err(new Error("Frontmatter allowed-tools array must contain non-empty strings"));
+			}
+			parts.push(item.trim());
+		}
+		if (parts.length === 0) {
+			return err(new Error("Frontmatter allowed-tools cannot be empty"));
+		}
+		return ok(parts);
+	}
+
 	if (typeof value !== "string") {
-		return err(new Error("Frontmatter allowed-tools must be a space-delimited string"));
+		return err(new Error("Frontmatter allowed-tools must be a string or string array"));
 	}
 
 	const parts = value

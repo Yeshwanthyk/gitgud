@@ -92,15 +92,27 @@ describe("validateFrontmatter", () => {
 		}
 	});
 
-	test("rejects array allowed-tools (must be space-delimited string)", () => {
+	test("accepts array allowed-tools", () => {
 		const result = validateFrontmatter({
 			name: "test",
 			description: "test",
 			"allowed-tools": ["Read", "Write"],
 		});
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value.allowedTools).toEqual(["Read", "Write"]);
+		}
+	});
+
+	test("rejects array allowed-tools with empty entries", () => {
+		const result = validateFrontmatter({
+			name: "test",
+			description: "test",
+			"allowed-tools": ["Read", ""],
+		});
 		expect(result.ok).toBe(false);
 		if (!result.ok) {
-			expect(result.error.message).toContain("space-delimited string");
+			expect(result.error.message).toContain("non-empty strings");
 		}
 	});
 
