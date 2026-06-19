@@ -75,6 +75,15 @@ export function parseSkill(
 	});
 }
 
+/** Immediate skill subdirectory names (excludes dotfiles), sorted. */
+export function listSkillDirNames(dir: string): string[] {
+	if (!existsSync(dir)) return [];
+	return readdirSync(dir, { withFileTypes: true })
+		.filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
+		.map((entry) => entry.name)
+		.sort();
+}
+
 export function scanSkillsDir(dir: string, scope: Scope): Skill[] {
 	const absoluteDir = path.resolve(dir);
 	let dirStats;

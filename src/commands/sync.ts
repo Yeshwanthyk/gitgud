@@ -11,13 +11,15 @@ import {
 import os from "node:os";
 import path from "node:path";
 
+import { ANSI, paint } from "../core/colors";
 import { getAgentSkillsDirs, getGlobalSkillsDir } from "../core/paths";
+import { listSkillDirNames } from "../core/skills";
 import { formatError } from "../output";
 import type { OutputFormat } from "../types";
 
-type AgentName = "claude" | "codex" | "pi";
+type AgentName = "claude" | "codex" | "pi" | "droid";
 
-const ALL_AGENTS: AgentName[] = ["claude", "codex", "pi"];
+const ALL_AGENTS: AgentName[] = ["claude", "codex", "pi", "droid"];
 
 function isAgentName(value: string): value is AgentName {
 	return (ALL_AGENTS as string[]).includes(value);
@@ -42,14 +44,6 @@ type SyncOptions = {
 	format: OutputFormat;
 	silent?: boolean;
 };
-
-function listSourceSkills(sourceDir: string): string[] {
-	if (!existsSync(sourceDir)) return [];
-	return readdirSync(sourceDir, { withFileTypes: true })
-		.filter((d) => d.isDirectory() && !d.name.startsWith("."))
-		.map((d) => d.name)
-		.sort();
-}
 
 function readLinkAbs(linkPath: string): string | null {
 	try {
@@ -173,7 +167,7 @@ function pruneAgentDir(params: {
 export function runSync(options: SyncOptions): SyncEntry[] {
 	const requested = options.agents && options.agents.length > 0 ? options.agents : ALL_AGENTS;
 	const sourceDir = getGlobalSkillsDir();
-	const sourceSkills = new Set(listSourceSkills(sourceDir));
+	const sourceSkills = new Set(listSkillDirNames(sourceDir));
 
 	const actions: SyncEntry[] = [];
 
@@ -243,29 +237,6 @@ function summarize(actions: SyncEntry[]): ActionCounts {
 	return counts;
 }
 
-const ANSI = {
-	reset: "\x1b[0m",
-	bold: "\x1b[1m",
-	dim: "\x1b[2m",
-	red: "\x1b[31m",
-	green: "\x1b[32m",
-	yellow: "\x1b[33m",
-	blue: "\x1b[34m",
-	magenta: "\x1b[35m",
-	cyan: "\x1b[36m",
-	gray: "\x1b[90m",
-} as const;
-
-function useColor(): boolean {
-	// biome-ignore lint/complexity/useLiteralKeys: bracket notation
-	if (process.env["NO_COLOR"]) return false;
-	return Boolean(process.stdout.isTTY);
-}
-
-function paint(color: string, str: string): string {
-	return useColor() ? `${color}${str}${ANSI.reset}` : str;
-}
-
 type ActionStyle = { symbol: string; color: string; label: string };
 
 function styleFor(action: SyncAction): ActionStyle {
@@ -293,7 +264,7 @@ function homify(input: string): string {
 	return input.split(home).join("~");
 }
 
-const AGENT_ORDER: AgentName[] = ["claude", "codex", "pi"];
+const AGENT_ORDER: AgentName[] = ["claude", "codex", "pi", "droid"];
 const LABEL_WIDTH = 8; // longest label is "relinked"
 
 function printAgentSection(agent: AgentName, entries: SyncEntry[]): void {

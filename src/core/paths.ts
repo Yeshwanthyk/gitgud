@@ -20,6 +20,7 @@ export function getAgentSkillsDirs(): { name: string; dir: string }[] {
 		{ name: "claude", dir: path.join(home, ".claude", "skills") },
 		{ name: "codex", dir: path.join(home, ".codex", "skills") },
 		{ name: "pi", dir: path.join(home, ".pi", "agent", "skills") },
+		{ name: "droid", dir: path.join(home, ".factory", "skills") },
 	];
 }
 
