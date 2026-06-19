@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -8,7 +8,7 @@ import type { Scope, Skill, SkillMeta } from "../types";
 import { VERSION } from "../version";
 import { readSkillMeta, writeSkillMeta } from "./metadata";
 import { ensureDir, getGlobalSkillsDir, getLocalSkillsDir } from "./paths";
-import { parseSkill } from "./skills";
+import { listSkillDirNames, parseSkill } from "./skills";
 
 type SkillArchiveManifestSkill = {
 	name: string;
@@ -107,14 +107,6 @@ function getStoreDir(scope: Scope): string | null {
 	return scope === "global" ? getGlobalSkillsDir() : getLocalSkillsDir();
 }
 
-function skillEntries(sourceDir: string): string[] {
-	if (!existsSync(sourceDir)) return [];
-	return readdirSync(sourceDir, { withFileTypes: true })
-		.filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
-		.map((entry) => entry.name)
-		.sort();
-}
-
 function parseManifest(value: unknown): SkillArchiveManifest {
 	if (typeof value !== "object" || value === null || Array.isArray(value)) {
 		throw new Error("Invalid archive manifest.");
@@ -188,7 +180,7 @@ export async function exportSkillsArchive(params: {
 		const manifestSkills: SkillArchiveManifestSkill[] = [];
 		const skipped: ExportSkipped[] = [];
 
-		for (const entry of skillEntries(sourceDir)) {
+		for (const entry of listSkillDirNames(sourceDir)) {
 			const sourceSkillDir = path.join(sourceDir, entry);
 			const parsed = parseSkill(sourceSkillDir, params.scope);
 			if (!parsed.ok) {

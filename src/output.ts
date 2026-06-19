@@ -1,15 +1,10 @@
 import path from "node:path";
+import { paint } from "./core/colors";
 import type { OutputFormat, Skill } from "./types";
 
-const useColor = (): boolean =>
-	process.stdout.isTTY === true && !process.env["NO_COLOR"] && process.env["TERM"] !== "dumb";
-
-const paint = (code: string, text: string): string =>
-	useColor() ? `\x1b[${code}m${text}\x1b[0m` : text;
-
-const dim = (text: string): string => paint("2", text);
-const blue = (text: string): string => paint("38;5;111", text);
-const pink = (text: string): string => paint("38;5;211", text);
+const dim = (text: string): string => paint("\x1b[2m", text);
+const blue = (text: string): string => paint("\x1b[38;5;111m", text);
+const pink = (text: string): string => paint("\x1b[38;5;211m", text);
 
 const MAX_NAME_WIDTH = 30;
 const MIN_DESC_WIDTH = 20;
