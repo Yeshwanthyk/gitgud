@@ -4,6 +4,8 @@ All notable changes to gitgud will be documented in this file.
 
 ## Unreleased
 
+## [0.0.13] - 2026-06-29
+
 ### Added
 
 - **`gitgud export` / `gitgud import`**: archive and restore every skill in the canonical gitgud registry, preserving bundled files and `.gitgud-meta.json`; imports skip existing skills by default, support `--dry-run` / `--force`, and auto-sync after global imports.
@@ -11,6 +13,10 @@ All notable changes to gitgud will be documented in this file.
 ### Changed
 
 - **`gitgud init` AGENTS.md snippet**: adds the default contract for visual, rich, and interactive artifacts to be standalone HTML with CSS in a `<head><style>` block.
+
+### Fixed
+
+- **`gitgud apply` / `materialize`**: add the missing `listSkillDirNames` helper so the binary builds again; materialize can now prune stale skill directories that are no longer selected.
 
 ## [0.0.12] - 2026-05-02
 
