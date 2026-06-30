@@ -4,6 +4,12 @@ All notable changes to gitgud will be documented in this file.
 
 ## Unreleased
 
+## [0.0.14] - 2026-06-29
+
+### Fixed
+
+- **`gitgud self-update`**: stage the downloaded binary alongside the installed binary instead of in `os.tmpdir()`, so the final swap is an in-place rename on the same filesystem. Fixes `EXDEV: cross-device link not permitted` when `/tmp` is a separate mount (e.g. tmpfs).
+
 ## [0.0.13] - 2026-06-29
 
 ### Added
