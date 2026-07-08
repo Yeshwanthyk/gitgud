@@ -147,7 +147,11 @@ export async function selfUpdateCommand(): Promise<void> {
 		process.exit(1);
 	}
 
-	const tmpPath = path.join(os.tmpdir(), `gitgud-update-${Date.now()}`);
+	// Stage the download alongside the target binary so the final swap is an
+	// in-place rename on the same filesystem. Using os.tmpdir() breaks on
+	// systems where /tmp is a separate mount (e.g. tmpfs): rename() across
+	// filesystems fails with EXDEV.
+	const tmpPath = path.join(path.dirname(binaryPath), `.gitgud-update-${Date.now()}`);
 
 	console.log(`Downloading ${assetName}...`);
 	const downloadResponse = await fetch(asset.browser_download_url);
