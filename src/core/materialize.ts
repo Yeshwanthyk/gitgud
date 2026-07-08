@@ -1,12 +1,12 @@
 import { existsSync } from "node:fs";
-import { cp, rm } from "node:fs/promises";
+import { cp, rename, rm } from "node:fs/promises";
 import path from "node:path";
 
 import type { Scope } from "../types";
 import { type LockedSkill, type LockedSource, readLockfile } from "./lockfile";
 import { ensureDir, getCacheDir, getSkillsDir } from "./paths";
 import { readProfile } from "./profile";
-import { listSkillDirNames } from "./skills";
+import { findSkillManifestPath, listSkillDirNames } from "./skills";
 
 type MaterializeAction =
 	| { action: "installed"; skill: string; path: string }
@@ -70,6 +70,16 @@ function assertNoNameConflicts(skills: Array<{ skill: LockedSkill }>): void {
 	}
 }
 
+async function canonicalizeSkillManifest(skillDir: string): Promise<void> {
+	const manifestPath = findSkillManifestPath(skillDir);
+	if (!manifestPath || path.basename(manifestPath) === "SKILL.md") return;
+
+	const canonicalPath = path.join(skillDir, "SKILL.md");
+	const tempPath = path.join(skillDir, `.gitgud-${Date.now()}-SKILL.md`);
+	await rename(manifestPath, tempPath);
+	await rename(tempPath, canonicalPath);
+}
+
 export async function materialize(scope: Scope): Promise<MaterializeResult> {
 	const profile = await readProfile(scope);
 	const lockfile = await readLockfile(scope);
@@ -97,6 +107,7 @@ export async function materialize(scope: Scope): Promise<MaterializeResult> {
 		const dest = path.join(skillsDir, skill.name);
 		await rm(dest, { recursive: true, force: true });
 		await cp(from, dest, { recursive: true });
+		await canonicalizeSkillManifest(dest);
 		actions.push({ action: "installed", skill: skill.name, path: dest });
 	}
 

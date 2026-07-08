@@ -1,11 +1,21 @@
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { cp, mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import {
+	cp,
+	mkdir,
+	mkdtemp,
+	readdir,
+	readFile,
+	rename,
+	rm,
+	stat,
+	writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { parseSkill } from "../core/skills";
+import { findSkillManifestPath, parseSkill } from "../core/skills";
 import { err, ok, type Result, type SkillMeta } from "../types";
 import { parseSource } from "./parse";
 
@@ -139,8 +149,8 @@ async function findFirstDirectory(dir: string): Promise<string> {
 const AGENT_SKILL_HIDDEN_DIRS = new Set([".agents", ".claude", ".codex", ".pi", ".gitgud"]);
 
 /**
- * Recursively search for SKILL.md files in a directory.
- * Returns paths to directories containing SKILL.md, sorted by depth (shallowest first).
+ * Recursively search for skill manifest files in a directory.
+ * Returns paths to directories containing a manifest, sorted by depth (shallowest first).
  */
 async function findSkillDirs(dir: string, maxDepth = 5): Promise<string[]> {
 	const results: { path: string; depth: number }[] = [];
@@ -148,8 +158,7 @@ async function findSkillDirs(dir: string, maxDepth = 5): Promise<string[]> {
 	async function search(currentDir: string, depth: number): Promise<void> {
 		if (depth > maxDepth) return;
 
-		const skillPath = path.join(currentDir, "SKILL.md");
-		if (existsSync(skillPath)) {
+		if (findSkillManifestPath(currentDir)) {
 			results.push({ path: currentDir, depth });
 			return; // Don't search inside skill directories
 		}
@@ -179,7 +188,7 @@ async function findAllSkillDirs(dir: string, maxDepth = 5): Promise<string[]> {
 	async function search(currentDir: string, depth: number): Promise<void> {
 		if (depth > maxDepth) return;
 
-		if (existsSync(path.join(currentDir, "SKILL.md"))) {
+		if (findSkillManifestPath(currentDir)) {
 			results.push({ path: currentDir, depth });
 		}
 
@@ -222,6 +231,16 @@ async function listFilesRecursive(dir: string): Promise<string[]> {
 
 	await walk(dir);
 	return files.sort();
+}
+
+async function canonicalizeSkillManifest(skillDir: string): Promise<void> {
+	const manifestPath = findSkillManifestPath(skillDir);
+	if (!manifestPath || path.basename(manifestPath) === "SKILL.md") return;
+
+	const canonicalPath = path.join(skillDir, "SKILL.md");
+	const tempPath = path.join(skillDir, `.gitgud-${Date.now()}-SKILL.md`);
+	await rename(manifestPath, tempPath);
+	await rename(tempPath, canonicalPath);
 }
 
 export async function hashSkillDir(dir: string): Promise<string> {
@@ -441,6 +460,7 @@ export async function installFromGithub(
 			// cp instead of moveDir so each skill in a multi-skill repo gets its
 			// own copy (the candidate dirs share the same temp tree).
 			await cp(candidateDir, destDir, { recursive: true });
+			await canonicalizeSkillManifest(destDir);
 
 			const subpath = path.relative(repoRoot, candidateDir);
 			const meta: SkillMeta = {

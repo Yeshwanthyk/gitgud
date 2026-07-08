@@ -9,12 +9,13 @@ function makeSkill(
 	root: string,
 	relative: string,
 	name: string,
-	description = `skill ${name}`
+	description = `skill ${name}`,
+	manifestName = "SKILL.md"
 ): void {
 	const dir = path.join(root, relative);
 	mkdirSync(dir, { recursive: true });
 	writeFileSync(
-		path.join(dir, "SKILL.md"),
+		path.join(dir, manifestName),
 		`---\nname: ${name}\ndescription: ${description}\n---\nbody\n`
 	);
 }
@@ -73,5 +74,20 @@ describe("sources/github discovery", () => {
 		const after = await hashSkillDir(dir);
 		expect(after).not.toBe(before);
 		expect(after.startsWith("sha256:")).toBeTrue();
+	});
+
+	test("discovers lowercase skill.md manifests", async () => {
+		makeSkill(tmpRoot, "breadboarding", "breadboarding", "Breadboarding.", "skill.md");
+
+		const source = parseGithubSource("github:owner/repo");
+		expect(source.ok).toBe(true);
+		if (!source.ok) return;
+
+		const discovered = await discoverGithubSkills(source.value, tmpRoot);
+		expect(discovered.ok).toBe(true);
+		if (!discovered.ok) return;
+
+		expect(discovered.value.map((skill) => skill.name)).toEqual(["breadboarding"]);
+		expect(discovered.value[0]?.subpath).toBe("breadboarding");
 	});
 });

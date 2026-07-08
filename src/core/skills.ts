@@ -10,6 +10,8 @@ import {
 	getLocalSkillsDir,
 } from "./paths";
 
+const SKILL_MANIFEST_FILENAMES = ["SKILL.md", "skill.md"] as const;
+
 type ParseSkillOptions = {
 	/**
 	 * Enforce that the directory basename matches the frontmatter name.
@@ -19,6 +21,14 @@ type ParseSkillOptions = {
 	 */
 	enforceDirName?: boolean;
 };
+
+export function findSkillManifestPath(skillDir: string): string | undefined {
+	for (const filename of SKILL_MANIFEST_FILENAMES) {
+		const candidate = path.join(skillDir, filename);
+		if (existsSync(candidate)) return candidate;
+	}
+	return undefined;
+}
 
 export function parseSkill(
 	skillPath: string,
@@ -38,9 +48,9 @@ export function parseSkill(
 		return err(new Error(`Skill path is not a directory: ${absoluteSkillPath}`));
 	}
 
-	const skillFile = path.join(absoluteSkillPath, "SKILL.md");
-	if (!existsSync(skillFile)) {
-		return err(new Error(`Missing SKILL.md at ${skillFile}`));
+	const skillFile = findSkillManifestPath(absoluteSkillPath);
+	if (!skillFile) {
+		return err(new Error(`Missing SKILL.md at ${path.join(absoluteSkillPath, "SKILL.md")}`));
 	}
 
 	let content: string;
