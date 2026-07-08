@@ -125,22 +125,6 @@ export function scanSkillsDir(dir: string, scope: Scope): Skill[] {
 	return skills;
 }
 
-export function listSkillDirNames(dir: string): string[] {
-	const absoluteDir = path.resolve(dir);
-	let dirStats;
-	try {
-		dirStats = statSync(absoluteDir);
-	} catch {
-		return [];
-	}
-
-	if (!dirStats.isDirectory()) return [];
-
-	return readdirSync(absoluteDir, { withFileTypes: true })
-		.filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
-		.map((entry) => entry.name);
-}
-
 export function getAllSkills(): Skill[] {
 	const localClaudeDir = getLocalClaudeSkillsDir();
 	const localGitgudDir = getLocalSkillsDir();
