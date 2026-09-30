@@ -63,6 +63,9 @@ That's it — your skills are now visible to every supported agent.
 | `gitgud list` | List installed skills across every registry |
 | `gitgud search <query>` | Search by name or description |
 | `gitgud show <name>` | Print SKILL.md + base directory |
+| `gitgud select [source]` | Interactively choose enabled tracked skills |
+| `gitgud enable <skill...>` | Enable tracked skills by name or full id |
+| `gitgud disable <skill...>` | Disable tracked skills by name or full id |
 | `gitgud install <source>` | Install from a GitHub URL, `gh:` shorthand, claude-plugins registry id, or local path |
 | `gitgud uninstall <name>` | Remove a skill (and clean up its agent symlinks) |
 | `gitgud export <archive.tgz>` | Export every skill from the gitgud registry |

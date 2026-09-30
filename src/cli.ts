@@ -11,6 +11,7 @@ import { listCommand } from "./commands/list";
 import { profileCommand } from "./commands/profile";
 import { searchCommand } from "./commands/search";
 import { selectCommand } from "./commands/select";
+import { disableCommand, enableCommand } from "./commands/selection";
 import { show } from "./commands/show";
 import { statusCommand } from "./commands/status";
 import { syncCommand } from "./commands/sync";
@@ -40,6 +41,8 @@ Commands:
   search <query>
   add <github-url>      Track a GitHub skill source and select enabled skills
   select [source]       Toggle enabled skills
+  enable <skill...>     Enable tracked skills by name or id
+  disable <skill...>    Disable tracked skills by name or id
   status                Show tracked skill state
   apply                 Materialize selected skills, then sync
   install <name>
@@ -170,6 +173,14 @@ async function dispatch(command: string, args: string[], options: CliOptions): P
 		}
 		case "select": {
 			await selectCommand(args, {
+				scope: options.local ? "local" : "global",
+				format: resolveOutputFormat(options),
+			});
+			return;
+		}
+		case "enable":
+		case "disable": {
+			await (command === "enable" ? enableCommand : disableCommand)(args, {
 				scope: options.local ? "local" : "global",
 				format: resolveOutputFormat(options),
 			});
