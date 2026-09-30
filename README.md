@@ -135,7 +135,8 @@ Each installed skill records its source URL and subpath in `.gitgud-meta.json`, 
 
 `gitgud sync` is the bridge between the canonical store and each agent's expected layout. It creates **per-skill symlinks**, so:
 
-- Manually-added skills in `~/.claude/skills/` (etc.) are left alone unless you pass `--force`.
+- Entries gitgud does not manage (real files and directories, or symlinks pointing outside `~/.gitgud/skills`) are reported as `unmanaged` and never modified, even with `--force` or `--prune`. Dotfiles are ignored.
+- Existing entries with a managed skill's name are left alone unless you pass `--force`.
 - Stale links pointing at removed gitgud skills are pruned automatically (disable with `--no-prune`).
 - Re-running is a fast no-op when everything is already correct.
 
@@ -153,6 +154,7 @@ Output groups actions per agent with color-coded status:
 claude
   ✓ linked    frontend-design
   → skipped   shaping       — symlink → ~/.local/share/shaping-skills/shaping
+  ? unmanaged yesh-mode     — existing directory
   · 19 already in sync
 
 codex
@@ -164,7 +166,7 @@ pi
 amp
   · 24 already in sync
 
-1 linked · 1 skipped · 90 noop
+1 linked · 1 skipped · 1 unmanaged · 90 noop
 ```
 
 `install`, `uninstall`, and `update --skills` run sync automatically afterward, so agent dirs stay consistent without an extra step.

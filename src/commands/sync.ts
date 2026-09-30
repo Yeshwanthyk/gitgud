@@ -25,7 +25,7 @@ function isAgentName(value: string): value is AgentName {
 	return (ALL_AGENTS as string[]).includes(value);
 }
 
-type SyncAction = "linked" | "noop" | "relinked" | "skipped" | "replaced" | "pruned";
+type SyncAction = "linked" | "noop" | "relinked" | "skipped" | "replaced" | "pruned" | "unmanaged";
 
 type SyncEntry = {
 	agent: AgentName;
@@ -164,6 +164,43 @@ function pruneAgentDir(params: {
 	return out;
 }
 
+function findUnmanaged(params: {
+	agent: AgentName;
+	agentSkillsDir: string;
+	sourceDir: string;
+	sourceSkills: Set<string>;
+}): SyncEntry[] {
+	const { agent, agentSkillsDir, sourceDir, sourceSkills } = params;
+	if (!existsSync(agentSkillsDir)) return [];
+
+	const out: SyncEntry[] = [];
+	for (const entry of readdirSync(agentSkillsDir, { withFileTypes: true })) {
+		if (entry.name.startsWith(".") || sourceSkills.has(entry.name)) continue;
+		const dest = path.join(agentSkillsDir, entry.name);
+		let lst;
+		try {
+			lst = lstatSync(dest);
+		} catch {
+			continue;
+		}
+
+		let reason: string;
+		if (lst.isSymbolicLink()) {
+			const resolved = readLinkAbs(dest);
+			if (!resolved || isInside(resolved, sourceDir)) continue;
+			reason = `symlink → ${resolved}`;
+		} else if (lst.isDirectory()) {
+			reason = "existing directory";
+		} else if (lst.isFile()) {
+			reason = "existing file";
+		} else {
+			continue;
+		}
+		out.push({ agent, skill: entry.name, action: "unmanaged", path: dest, reason });
+	}
+	return out;
+}
+
 export function runSync(options: SyncOptions): SyncEntry[] {
 	const requested = options.agents && options.agents.length > 0 ? options.agents : ALL_AGENTS;
 	const sourceDir = getGlobalSkillsDir();
@@ -214,6 +251,7 @@ export function runSync(options: SyncOptions): SyncEntry[] {
 				})
 			);
 		}
+		actions.push(...findUnmanaged({ agent, agentSkillsDir, sourceDir, sourceSkills }));
 	}
 
 	if (!options.silent) {
@@ -231,6 +269,7 @@ function summarize(actions: SyncEntry[]): ActionCounts {
 		replaced: 0,
 		skipped: 0,
 		pruned: 0,
+		unmanaged: 0,
 		noop: 0,
 	};
 	for (const a of actions) counts[a.action]++;
@@ -251,6 +290,8 @@ function styleFor(action: SyncAction): ActionStyle {
 			return { symbol: "\u2192", color: ANSI.yellow, label: "skipped" };
 		case "pruned":
 			return { symbol: "\u2717", color: ANSI.red, label: "pruned" };
+		case "unmanaged":
+			return { symbol: "?", color: ANSI.yellow, label: "unmanaged" };
 		case "noop":
 			return { symbol: "\u00b7", color: ANSI.gray, label: "noop" };
 	}
@@ -265,7 +306,7 @@ function homify(input: string): string {
 }
 
 const AGENT_ORDER: AgentName[] = ["claude", "codex", "pi", "droid", "amp"];
-const LABEL_WIDTH = 8; // longest label is "relinked"
+const LABEL_WIDTH = 9; // longest label is "unmanaged"
 
 function printAgentSection(agent: AgentName, entries: SyncEntry[]): void {
 	const nonNoop = entries.filter((e) => e.action !== "noop");
@@ -306,6 +347,7 @@ function renderSummary(s: ActionCounts): string {
 	push(s.replaced, ANSI.magenta, "replaced");
 	push(s.skipped, ANSI.yellow, "skipped");
 	push(s.pruned, ANSI.red, "pruned");
+	push(s.unmanaged, ANSI.yellow, "unmanaged");
 	push(s.noop, ANSI.gray, "noop");
 	if (parts.length === 0) return paint(ANSI.dim, "nothing changed");
 	return parts.join(paint(ANSI.dim, " \u00b7 "));

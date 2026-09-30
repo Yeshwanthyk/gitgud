@@ -13,7 +13,7 @@ import {
 import os from "node:os";
 import path from "node:path";
 
-import { runSync } from "../../src/commands/sync";
+import { autoSync, runSync } from "../../src/commands/sync";
 
 function makeSkillDir(root: string, name: string): string {
 	const dir = path.join(root, name);
@@ -180,6 +180,120 @@ describe("sync command", () => {
 		const userLink = path.join(tmpHome, ".claude", "skills", "user-link");
 		expect(lstatSync(userLink).isSymbolicLink()).toBeTrue();
 		expect(readlinkSync(userLink)).toBe(userTarget);
+	});
+
+	test("reports unmanaged directories, files, and foreign links without changing them", () => {
+		const agentSkillsDir = path.join(tmpHome, ".claude", "skills");
+		mkdirSync(agentSkillsDir);
+		const userDir = path.join(agentSkillsDir, "yesh-mode");
+		const userFile = path.join(agentSkillsDir, "notes.txt");
+		const userLink = path.join(agentSkillsDir, "references");
+		const target = path.join(tmpHome, "shared-references");
+		mkdirSync(userDir);
+		writeFileSync(path.join(userDir, "keep"), "keep me");
+		writeFileSync(userFile, "keep me");
+		mkdirSync(target);
+		symlinkSync(target, userLink, "dir");
+
+		// Worst-case flags must still leave unmanaged entries untouched.
+		const actions = runSync({
+			agents: ["claude"],
+			dryRun: false,
+			force: true,
+			prune: true,
+			format: "text",
+			silent: true,
+		});
+		expect(
+			actions.filter((a) => a.action === "unmanaged").sort((a, b) => a.skill.localeCompare(b.skill))
+		).toEqual([
+			{
+				agent: "claude",
+				skill: "notes.txt",
+				action: "unmanaged",
+				path: userFile,
+				reason: "existing file",
+			},
+			{
+				agent: "claude",
+				skill: "references",
+				action: "unmanaged",
+				path: userLink,
+				reason: `symlink → ${target}`,
+			},
+			{
+				agent: "claude",
+				skill: "yesh-mode",
+				action: "unmanaged",
+				path: userDir,
+				reason: "existing directory",
+			},
+		]);
+		expect(lstatSync(userDir).isDirectory()).toBeTrue();
+		expect(existsSync(path.join(userDir, "keep"))).toBeTrue();
+		expect(lstatSync(userFile).isFile()).toBeTrue();
+		expect(lstatSync(userLink).isSymbolicLink()).toBeTrue();
+		expect(readlinkSync(userLink)).toBe(target);
+	});
+
+	test("excludes managed skills, dotfiles, and links into the global store", () => {
+		const sourceDir = path.join(tmpHome, ".gitgud", "skills");
+		makeSkillDir(sourceDir, "alpha");
+		const agentSkillsDir = path.join(tmpHome, ".claude", "skills");
+		mkdirSync(agentSkillsDir);
+		mkdirSync(path.join(agentSkillsDir, ".system"));
+		writeFileSync(path.join(agentSkillsDir, ".DS_Store"), "metadata");
+		symlinkSync(path.join(sourceDir, "retired"), path.join(agentSkillsDir, "retired"), "dir");
+
+		const actions = runSync({
+			agents: ["claude"],
+			dryRun: false,
+			force: false,
+			prune: false,
+			format: "text",
+			silent: true,
+		});
+
+		expect(actions.filter((a) => a.action === "unmanaged")).toEqual([]);
+		expect(actions.find((a) => a.skill === "alpha")?.action).toBe("linked");
+		expect(lstatSync(path.join(agentSkillsDir, "retired")).isSymbolicLink()).toBeTrue();
+	});
+
+	test("prints unmanaged entries in text and JSON, while auto-sync stays silent", () => {
+		const agentSkillsDir = path.join(tmpHome, ".claude", "skills");
+		mkdirSync(agentSkillsDir);
+		mkdirSync(path.join(agentSkillsDir, "yesh-mode"));
+		const originalWrite = process.stdout.write;
+		let output = "";
+		process.stdout.write = ((chunk: string | Uint8Array) => {
+			output += chunk.toString();
+			return true;
+		}) as typeof process.stdout.write;
+		try {
+			const options = { dryRun: false, force: false, prune: false };
+			runSync({ ...options, agents: ["claude"], format: "text" });
+			const text = output.replace(/\x1b\[[0-9;]*m/g, "");
+			expect(text).toContain("? unmanaged  yesh-mode");
+			expect(text).toContain("1 unmanaged");
+
+			output = "";
+			runSync({ ...options, agents: ["claude"], format: "json" });
+			const json = JSON.parse(output);
+			expect(json.actions).toContainEqual({
+				agent: "claude",
+				skill: "yesh-mode",
+				action: "unmanaged",
+				path: path.join(agentSkillsDir, "yesh-mode"),
+				reason: "existing directory",
+			});
+			expect(json.summary.unmanaged).toBe(1);
+
+			output = "";
+			autoSync();
+			expect(output).toBe("");
+		} finally {
+			process.stdout.write = originalWrite;
+		}
 	});
 
 	test("--no-prune leaves dangling managed symlinks alone", () => {
