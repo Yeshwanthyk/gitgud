@@ -60,6 +60,23 @@ describe("core/paths", () => {
 		expect(normalize(getLocalDir()!)).toBe(normalize(local));
 	});
 
+	test("getLocalDir skips the global registry in $HOME", () => {
+		// biome-ignore lint/complexity/useLiteralKeys: TS requires bracket notation
+		const originalHome = process.env["HOME"];
+		// biome-ignore lint/complexity/useLiteralKeys: TS requires bracket notation
+		process.env["HOME"] = tmpRoot;
+		try {
+			ensureDir(path.join(tmpRoot, ".gitgud"));
+			const project = path.join(tmpRoot, "code", "project");
+			ensureDir(project);
+			process.chdir(project);
+			expect(getLocalDir()).toBeNull();
+		} finally {
+			// biome-ignore lint/complexity/useLiteralKeys: TS requires bracket notation
+			process.env["HOME"] = originalHome;
+		}
+	});
+
 	test("getLocalDir returns null when not found", () => {
 		const nested = path.join(tmpRoot, "a", "b");
 		ensureDir(nested);

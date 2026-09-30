@@ -62,11 +62,13 @@ export function getLocalClaudeSkillsDir(startDir: string = process.cwd()): strin
 
 export function getLocalDir(startDir: string = process.cwd()): string | null {
 	let current = path.resolve(startDir);
+	// The global registry is not a project-local one, even when cwd is under $HOME.
+	const globalDir = path.resolve(getGlobalDir());
 
 	while (true) {
 		const candidate = path.join(current, ".gitgud");
 		try {
-			if (existsSync(candidate) && statSync(candidate).isDirectory()) {
+			if (candidate !== globalDir && existsSync(candidate) && statSync(candidate).isDirectory()) {
 				return candidate;
 			}
 		} catch {
