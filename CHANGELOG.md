@@ -4,6 +4,20 @@ All notable changes to gitgud will be documented in this file.
 
 ## Unreleased
 
+## [0.0.15] - 2026-10-05
+
+### Added
+
+- **`gitgud enable` / `gitgud disable`**: turn tracked skills on or off by name or id without the interactive picker; `--local` targets the project registry.
+- **`gitgud sync` targets**: Amp (`~/.config/agents/skills`) and Droid (`~/.factory/skills`).
+- **`gitgud sync` unmanaged report**: real files and directories, or symlinks pointing outside `~/.gitgud/skills`, are reported as `unmanaged` and never modified, even with `--force` or `--prune`. Dotfiles are ignored.
+
+### Fixed
+
+- **Skill manifests**: lowercase `skill.md` is accepted alongside `SKILL.md`, locally and from GitHub sources.
+- **Frontmatter**: `allowed-tools` may be a YAML array as well as a string.
+- **Paths**: the global registry (`~/.gitgud`) is no longer mistaken for a project-local one when running under `$HOME`.
+
 ## [0.0.14] - 2026-06-29
 
 ### Fixed
