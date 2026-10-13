@@ -4,6 +4,26 @@ All notable changes to gitgud will be documented in this file.
 
 ## Unreleased
 
+## [0.1.0] - 2026-10-13
+
+Skill loading follows the [Agent Skills client guide](https://agentskills.io/client-implementation/adding-skills-support): warn and load on cosmetic problems, and skip a skill only when it can't be loaded.
+
+### Changed
+
+- **Lenient validation**: off-spec names, a name that doesn't match its directory, a long description, and odd `allowed-tools` or `metadata` values are warnings, not errors. A skill is skipped only when its YAML can't be parsed, its description is empty, or its name isn't a safe single path segment (no `/`, `\`, `:` or leading dot).
+- **One bad skill no longer fails its source.** Invalid skills are skipped with a reason, and `update`, `add` and `profile apply` print them under the source. The source fails only when it has no valid skills.
+- **Kept on breakage**: a tracked skill whose manifest turns invalid upstream keeps its last good version and its selection, and updates normally once fixed.
+- **No tombstones**: a skill removed upstream leaves the lock and the profile. Older `removed-upstream` lock entries are dropped on read. Selections now follow the lock, so orphaned selections are cleaned up.
+- **Cache pruning**: commits the lock no longer refers to are deleted from the cache on every apply.
+- Enabled skill names conflict case-insensitively, and duplicate names within a source are warned about.
+- `update` names skills that arrived disabled, with the `gitgud enable` command to turn them on.
+- `sync` explains unmanaged entries: a broken symlink and its target, or a directory without `SKILL.md`.
+
+### Fixed
+
+- Frontmatter repair keeps CRLF line endings.
+- `list --json` and `show --json` no longer include parse warnings in the skill object.
+
 ## [0.0.16] - 2026-10-13
 
 ### Fixed
