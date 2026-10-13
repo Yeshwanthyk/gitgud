@@ -183,4 +183,63 @@ describe("materialize", () => {
 
 		await expect(materialize("global")).rejects.toThrow("Enabled skill name conflict");
 	});
+
+	test("reads a kept skill from its older commit and prunes commits the lock no longer names", async () => {
+		const repoCache = path.join(tmpHome, ".gitgud", "cache", "github", "owner", "repo");
+		makeSkill(path.join(repoCache, "old"), "kept", "kept from old");
+		makeSkill(path.join(repoCache, "new"), "fresh", "fresh from new");
+		makeSkill(path.join(repoCache, "stale"), "fresh", "stale");
+		makeSkill(path.join(tmpHome, ".gitgud", "cache", "github", "gone", "repo", "x"), "z");
+
+		const skill = (name: string, commit: string) => ({
+			id: `github:owner/repo::${name}`,
+			sourceId: "github:owner/repo",
+			name,
+			description: name,
+			subpath: name,
+			status: "present" as const,
+			contentHash: "sha256:x",
+			commit,
+			lastSeenCommit: commit,
+			lastSeenAt: "2026-01-01T00:00:00.000Z",
+		});
+		const source = {
+			id: "github:owner/repo",
+			type: "github" as const,
+			repo: "owner/repo",
+			url: "https://github.com/owner/repo",
+			ref: "main",
+		};
+		await writeProfile("global", {
+			version: 1,
+			sources: [source],
+			selections: {
+				"github:owner/repo::kept": "enabled",
+				"github:owner/repo::fresh": "enabled",
+			},
+		});
+		await writeLockfile("global", {
+			version: 1,
+			sources: {
+				[source.id]: {
+					...source,
+					resolvedCommit: "new",
+					fetchedAt: "2026-01-01T00:00:00.000Z",
+					skills: { kept: skill("kept", "old"), fresh: skill("fresh", "new") },
+				},
+			},
+		});
+
+		const result = await materialize("global");
+
+		const skillsDir = getGlobalSkillsDir();
+		expect(readFileSync(path.join(skillsDir, "kept", "SKILL.md"), "utf8")).toContain(
+			"kept from old"
+		);
+		expect(existsSync(path.join(repoCache, "old"))).toBeTrue();
+		expect(existsSync(path.join(repoCache, "new"))).toBeTrue();
+		expect(existsSync(path.join(repoCache, "stale"))).toBeFalse();
+		expect(existsSync(path.join(tmpHome, ".gitgud", "cache", "github", "gone"))).toBeFalse();
+		expect(result.prunedCacheDirs).toHaveLength(2);
+	});
 });

@@ -194,6 +194,12 @@ describe("sync command", () => {
 		writeFileSync(userFile, "keep me");
 		mkdirSync(target);
 		symlinkSync(target, userLink, "dir");
+		const userSkill = path.join(agentSkillsDir, "my-skill");
+		mkdirSync(userSkill);
+		writeFileSync(path.join(userSkill, "SKILL.md"), "---\nname: my-skill\ndescription: x\n---\n");
+		const brokenLink = path.join(agentSkillsDir, "gone");
+		const missingTarget = path.join(tmpHome, "missing");
+		symlinkSync(missingTarget, brokenLink, "dir");
 
 		// Worst-case flags must still leave unmanaged entries untouched.
 		const actions = runSync({
@@ -207,6 +213,20 @@ describe("sync command", () => {
 		expect(
 			actions.filter((a) => a.action === "unmanaged").sort((a, b) => a.skill.localeCompare(b.skill))
 		).toEqual([
+			{
+				agent: "claude",
+				skill: "gone",
+				action: "unmanaged",
+				path: brokenLink,
+				reason: `broken symlink → ${missingTarget}`,
+			},
+			{
+				agent: "claude",
+				skill: "my-skill",
+				action: "unmanaged",
+				path: userSkill,
+				reason: "existing directory",
+			},
 			{
 				agent: "claude",
 				skill: "notes.txt",
@@ -226,7 +246,7 @@ describe("sync command", () => {
 				skill: "yesh-mode",
 				action: "unmanaged",
 				path: userDir,
-				reason: "existing directory",
+				reason: "directory without SKILL.md",
 			},
 		]);
 		expect(lstatSync(userDir).isDirectory()).toBeTrue();
@@ -284,7 +304,7 @@ describe("sync command", () => {
 				skill: "yesh-mode",
 				action: "unmanaged",
 				path: path.join(agentSkillsDir, "yesh-mode"),
-				reason: "existing directory",
+				reason: "directory without SKILL.md",
 			});
 			expect(json.summary.unmanaged).toBe(1);
 

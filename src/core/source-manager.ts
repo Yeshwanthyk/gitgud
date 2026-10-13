@@ -9,6 +9,7 @@ import {
 	type GithubSource,
 	parseGithubSource,
 	discoverGithubSkills,
+	type SkillDiagnostic,
 } from "../sources/github";
 import {
 	type GitgudLockfile,
@@ -19,6 +20,7 @@ import {
 } from "./lockfile";
 import { getCacheDir } from "./paths";
 import {
+	dropSelection,
 	ensureSelection,
 	type GitgudProfile,
 	type GithubTrackedSource,
@@ -27,7 +29,8 @@ import {
 	writeProfile,
 } from "./profile";
 
-type SourceRefreshChange = "added" | "updated" | "removed" | "unchanged";
+// "kept": the skill is invalid upstream now, so its last valid version stays installed.
+type SourceRefreshChange = "added" | "updated" | "removed" | "unchanged" | "kept";
 
 type SourceRefreshEntry = {
 	skill: LockedSkill;
@@ -38,6 +41,7 @@ type SourceRefreshResult = {
 	source: GithubTrackedSource;
 	lockSource: LockedSource;
 	entries: SourceRefreshEntry[];
+	diagnostics: SkillDiagnostic[];
 	cacheDir: string;
 };
 
@@ -78,23 +82,16 @@ function presentLockedSkill(params: {
 	};
 }
 
-function removedLockedSkill(skill: LockedSkill, commit: string, now: string): LockedSkill {
-	return {
-		...skill,
-		status: "removed-upstream",
-		commit,
-		removedAt: skill.removedAt ?? now,
-	};
-}
-
 export function applyDiscoveryToLock(params: {
 	lockfile: GitgudLockfile;
 	source: GithubTrackedSource;
 	discovered: DiscoveredGithubSkill[];
+	/** Subpaths with a manifest that failed to parse this refresh. */
+	invalid?: ReadonlySet<string>;
 	commit: string;
 	now: string;
 }): { lockfile: GitgudLockfile; lockSource: LockedSource; entries: SourceRefreshEntry[] } {
-	const { lockfile, source, discovered, commit, now } = params;
+	const { lockfile, source, discovered, invalid = new Set<string>(), commit, now } = params;
 	const previousSource = lockfile.sources[source.id];
 	const previousSkills = previousSource?.skills ?? {};
 	const nextSkills: Record<string, LockedSkill> = {};
@@ -109,19 +106,21 @@ export function applyDiscoveryToLock(params: {
 
 		let change: SourceRefreshChange = "added";
 		if (previous) {
-			change =
-				previous.status === "removed-upstream" || previous.contentHash !== next.contentHash
-					? "updated"
-					: "unchanged";
+			change = previous.contentHash !== next.contentHash ? "updated" : "unchanged";
 		}
 		entries.push({ skill: next, change });
 	}
 
+	// A skill gone upstream leaves the lock. One that is still there but invalid keeps
+	// its previous entry, whose commit points materialize at the last valid content.
 	for (const [subpath, previous] of Object.entries(previousSkills)) {
 		if (seen.has(subpath)) continue;
-		const removed = removedLockedSkill(previous, commit, now);
-		nextSkills[subpath] = removed;
-		entries.push({ skill: removed, change: "removed" });
+		if (invalid.has(subpath)) {
+			nextSkills[subpath] = previous;
+			entries.push({ skill: previous, change: "kept" });
+			continue;
+		}
+		entries.push({ skill: previous, change: "removed" });
 	}
 
 	const lockSource: LockedSource = {
@@ -149,6 +148,32 @@ export function applyDiscoveryToLock(params: {
 	};
 }
 
+/**
+ * Keep one selection per locked skill: new skills start disabled, and selections
+ * for skills no longer in their source's lock entry are dropped. Derived from the lock, not from
+ * change events, so a failed or partial refresh cannot leave orphans behind.
+ */
+export function reconcileSelections(
+	profile: GitgudProfile,
+	lockfile: GitgudLockfile
+): GitgudProfile {
+	const locked = new Set<string>();
+	let next = profile;
+	for (const source of Object.values(lockfile.sources)) {
+		for (const skill of Object.values(source.skills)) {
+			locked.add(skill.id);
+			next = ensureSelection(next, skill.id, "disabled");
+		}
+	}
+	// Only prune within sources already in the lock: an imported profile carries
+	// selections for sources that have not been fetched yet.
+	for (const id of Object.keys(next.selections)) {
+		const sourceId = id.slice(0, id.lastIndexOf("::"));
+		if (!locked.has(id) && sourceId in lockfile.sources) next = dropSelection(next, id);
+	}
+	return next;
+}
+
 async function refreshGithubSource(
 	scope: Scope,
 	source: GithubTrackedSource
@@ -163,6 +188,7 @@ async function refreshGithubSource(
 		const snapshot = await downloadGithubSnapshot(githubSource.value, tempDir);
 		const discovered = await discoverGithubSkills(githubSource.value, snapshot.rootDir);
 		if (!discovered.ok) throw discovered.error;
+		const { skills, diagnostics } = discovered.value;
 
 		const cacheDir = await cacheGithubSnapshot(snapshot, requireCacheDir(scope));
 		const lockfile = await readLockfile(scope);
@@ -170,7 +196,8 @@ async function refreshGithubSource(
 		const updated = applyDiscoveryToLock({
 			lockfile,
 			source,
-			discovered: discovered.value,
+			discovered: skills,
+			invalid: new Set(diagnostics.filter((d) => d.level === "skipped").map((d) => d.subpath)),
 			commit: snapshot.resolvedCommit,
 			now,
 		});
@@ -180,6 +207,7 @@ async function refreshGithubSource(
 			source,
 			lockSource: updated.lockSource,
 			entries: updated.entries,
+			diagnostics,
 			cacheDir,
 		};
 	} finally {
@@ -198,10 +226,7 @@ export async function addGithubSourceToProfile(
 	let profile = upsertSource(await readProfile(scope), source);
 	const refresh = await refreshGithubSource(scope, source);
 
-	for (const entry of refresh.entries) {
-		if (entry.skill.status !== "present") continue;
-		profile = ensureSelection(profile, entry.skill.id, "disabled");
-	}
+	profile = reconcileSelections(profile, await readLockfile(scope));
 
 	await writeProfile(scope, profile);
 	return { profile, source, refresh };
@@ -223,15 +248,11 @@ export async function refreshProfileSources(
 	}
 
 	const results: SourceRefreshResult[] = [];
-	let nextProfile = profile;
-	for (const source of selected) {
-		const refresh = await refreshGithubSource(scope, source);
-		for (const entry of refresh.entries) {
-			if (entry.skill.status !== "present") continue;
-			nextProfile = ensureSelection(nextProfile, entry.skill.id, "disabled");
-		}
-		results.push(refresh);
+	try {
+		for (const source of selected) results.push(await refreshGithubSource(scope, source));
+	} finally {
+		// Runs even when a later source fails, so sources already refreshed stay consistent.
+		await writeProfile(scope, reconcileSelections(profile, await readLockfile(scope)));
 	}
-	await writeProfile(scope, nextProfile);
 	return results;
 }

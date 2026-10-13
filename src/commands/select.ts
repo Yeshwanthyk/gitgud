@@ -40,7 +40,6 @@ export async function buildSelectableSkills(
 				description: skill.description,
 				group: groupFor(skill),
 				state: profile.selections[skill.id] ?? "disabled",
-				status: skill.status,
 			});
 		}
 	}

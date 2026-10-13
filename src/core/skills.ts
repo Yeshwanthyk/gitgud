@@ -77,11 +77,10 @@ export function parseSkill(
 	const frontmatter = frontmatterResult.value;
 	const dirName = path.basename(absoluteSkillPath);
 	if (enforceDirName && dirName !== frontmatter.name) {
-		return err(
-			new Error(
-				`Frontmatter name must match directory name: dir=${dirName} name=${frontmatter.name}`
-			)
-		);
+		frontmatter.warnings = [
+			...(frontmatter.warnings ?? []),
+			`name does not match directory: dir=${dirName} name=${frontmatter.name}`,
+		];
 	}
 
 	return ok({

@@ -63,35 +63,36 @@ describe("validateFrontmatter", () => {
 		expect(result.ok).toBe(false);
 	});
 
-	test("rejects name with trailing hyphen", () => {
+	test("warns on name with trailing hyphen", () => {
 		const result = validateFrontmatter({
 			name: "pdf-",
 			description: "test",
 		});
-		expect(result.ok).toBe(false);
-		if (!result.ok) {
-			expect(result.error.message).toContain("trailing");
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value.warnings?.join(" ")).toContain("trailing");
 		}
 	});
 
-	test("rejects name with consecutive hyphens", () => {
+	test("warns on name with consecutive hyphens", () => {
 		const result = validateFrontmatter({
 			name: "pdf--processing",
 			description: "test",
 		});
-		expect(result.ok).toBe(false);
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value.warnings?.join(" ")).toContain("consecutive");
+		}
 	});
 
-	test("rejects empty allowed-tools string", () => {
+	test("drops empty allowed-tools string", () => {
 		const result = validateFrontmatter({
 			name: "test",
 			description: "test",
 			"allowed-tools": "",
 		});
-		expect(result.ok).toBe(false);
-		if (!result.ok) {
-			expect(result.error.message).toContain("empty");
-		}
+		expect(result.ok).toBe(true);
+		if (result.ok) expect(result.value.allowedTools).toBeUndefined();
 	});
 
 	test("accepts array allowed-tools", () => {
@@ -106,16 +107,14 @@ describe("validateFrontmatter", () => {
 		}
 	});
 
-	test("rejects array allowed-tools with empty entries", () => {
+	test("drops empty entries from array allowed-tools", () => {
 		const result = validateFrontmatter({
 			name: "test",
 			description: "test",
 			"allowed-tools": ["Read", ""],
 		});
-		expect(result.ok).toBe(false);
-		if (!result.ok) {
-			expect(result.error.message).toContain("non-empty strings");
-		}
+		expect(result.ok).toBe(true);
+		if (result.ok) expect(result.value.allowedTools).toEqual(["Read"]);
 	});
 
 	test("accepts space-delimited allowed-tools", () => {
@@ -154,16 +153,14 @@ describe("validateFrontmatter", () => {
 		}
 	});
 
-	test("rejects empty compatibility", () => {
+	test("drops empty compatibility", () => {
 		const result = validateFrontmatter({
 			name: "test",
 			description: "test",
 			compatibility: "",
 		});
-		expect(result.ok).toBe(false);
-		if (!result.ok) {
-			expect(result.error.message).toContain("empty");
-		}
+		expect(result.ok).toBe(true);
+		if (result.ok) expect(result.value.compatibility).toBeUndefined();
 	});
 
 	test("accepts unknown frontmatter fields (forward-compat)", () => {
@@ -187,20 +184,37 @@ describe("validateFrontmatter", () => {
 		}
 	});
 
-	test("rejects non-boolean disable-model-invocation", () => {
+	test("warns on and ignores non-boolean disable-model-invocation", () => {
 		const result = validateFrontmatter({
 			name: "test",
 			description: "test",
 			"disable-model-invocation": "yes",
 		});
-		expect(result.ok).toBe(false);
-		if (!result.ok) {
-			expect(result.error.message).toContain("disable-model-invocation");
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value.warnings?.join(" ")).toContain("disable-model-invocation");
+			expect(result.value.disableModelInvocation).toBeUndefined();
 		}
 	});
 });
 
 describe("lenient frontmatter", () => {
+	test("rejects a name that is not a single path segment", () => {
+		for (const name of ["../escape", "a/b", "..", ".hidden", "c:d", "a\\b"]) {
+			expect(validateFrontmatter({ name, description: "x" }).ok).toBe(false);
+		}
+	});
+
+	test("rejects a missing description", () => {
+		expect(validateFrontmatter({ name: "x" }).ok).toBe(false);
+	});
+
+	test("warns when an unquoted colon was repaired", () => {
+		const result = parseFrontmatter("---\nname: a\ndescription: x: y\n---\n");
+		expect(result.ok).toBe(true);
+		if (result.ok) expect(result.value.warnings?.[0]).toContain("quoted");
+	});
+
 	const colonManifest = [
 		"---",
 		"name: recap",
@@ -253,6 +267,16 @@ describe("lenient frontmatter", () => {
 			"Catch up, read-only: what happened and why it's done."
 		);
 		expect((repaired as string).endsWith("---\n\n# Recap\n")).toBe(true);
+	});
+
+	test("repairManifest keeps CRLF line endings", () => {
+		const repaired = repairManifest(colonManifest.replaceAll("\n", "\r\n"));
+		expect(repaired).toBeDefined();
+		expect((repaired as string).replaceAll("\r\n", "")).not.toContain("\n");
+		const yamlText = (repaired as string).split("---")[1] as string;
+		expect(parseYaml(yamlText).description).toBe(
+			"Catch up, read-only: what happened and why it's done."
+		);
 	});
 
 	test("repairManifest leaves strict YAML alone", () => {

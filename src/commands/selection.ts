@@ -43,15 +43,13 @@ export function assertApplicable(
 	for (const item of items) {
 		const state = updates[item.id] ?? item.state;
 		if (state !== "enabled") continue;
-		if (item.status !== "present") {
-			if (updates[item.id]) throw new Error(`Skill removed upstream: ${item.id}.`);
-			continue;
-		}
-		const other = enabledIds.get(item.name);
+		// Directory names collide case-insensitively on default macOS volumes.
+		const key = item.name.toLowerCase();
+		const other = enabledIds.get(key);
 		if (other) {
 			throw new Error(`Enabled skill name conflict: ${item.name} from ${other} and ${item.id}.`);
 		}
-		enabledIds.set(item.name, item.id);
+		enabledIds.set(key, item.id);
 	}
 }
 

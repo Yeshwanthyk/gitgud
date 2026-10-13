@@ -8,6 +8,8 @@ export interface SkillFrontmatter {
 	allowedTools?: string[];
 	metadata?: Record<string, string>;
 	disableModelInvocation?: boolean;
+	/** Non-fatal spec issues found while parsing; the skill still loads. */
+	warnings?: string[];
 }
 
 export interface Skill {

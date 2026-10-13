@@ -137,6 +137,12 @@ export function ensureSelection(
 	};
 }
 
+export function dropSelection(profile: GitgudProfile, skillId: string): GitgudProfile {
+	if (!(skillId in profile.selections)) return profile;
+	const { [skillId]: _dropped, ...selections } = profile.selections;
+	return { ...profile, selections };
+}
+
 export function setSelections(
 	profile: GitgudProfile,
 	updates: Record<string, SelectionState>

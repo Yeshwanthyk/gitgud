@@ -24,7 +24,10 @@ export async function applyCommand(_args: string[], options: ApplyOptions): Prom
 		}
 
 		const changed = result.actions.filter((action) => action.action !== "noop");
-		process.stdout.write(`Applied ${changed.length} active skill change(s).\n`);
+		const pruned = result.prunedCacheDirs.length;
+		process.stdout.write(
+			`Applied ${changed.length} active skill change(s)${pruned ? `; pruned ${pruned} cached commit(s)` : ""}.\n`
+		);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unknown apply error";
 		fail(message, options.format);

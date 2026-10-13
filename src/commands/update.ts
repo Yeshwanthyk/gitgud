@@ -4,6 +4,8 @@ import path from "node:path";
 import { pipeline } from "node:stream/promises";
 
 import { materialize } from "../core/materialize";
+import { readProfile } from "../core/profile";
+import { formatDiagnostics } from "../output";
 import { refreshProfileSources } from "../core/source-manager";
 import type { OutputFormat, Scope } from "../types";
 import { VERSION } from "../version";
@@ -98,6 +100,24 @@ export async function updateSourcesCommand(
 				.map(([change, count]) => `${count} ${change}`)
 				.join(", ");
 			process.stdout.write(`Updated ${result.source.id}${summary ? ` (${summary})` : ""}.\n`);
+			process.stdout.write(formatDiagnostics(result.diagnostics));
+		}
+
+		// New skills start disabled; name them so a rename upstream doesn't
+		// silently drop a skill the user had enabled under its old name.
+		const profile = await readProfile(options.scope);
+		const newDisabled = results.flatMap((result) =>
+			result.entries
+				.filter(
+					(entry) => entry.change === "added" && profile.selections[entry.skill.id] !== "enabled"
+				)
+				.map((entry) => entry.skill.name)
+		);
+		if (newDisabled.length > 0) {
+			const scopeFlag = options.scope === "global" ? " --global" : "";
+			process.stdout.write(
+				`New skills are disabled: ${newDisabled.join(", ")}.\nEnable with: gitgud enable ${newDisabled.join(" ")}${scopeFlag}\n`
+			);
 		}
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unknown update error";

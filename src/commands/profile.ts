@@ -7,7 +7,7 @@ import { materialize } from "../core/materialize";
 import { ensureDir } from "../core/paths";
 import { parseProfile, readProfile, writeProfile } from "../core/profile";
 import { refreshProfileSources } from "../core/source-manager";
-import { formatError } from "../output";
+import { formatDiagnostics, formatError } from "../output";
 import type { OutputFormat, Scope } from "../types";
 import { autoSync } from "./sync";
 
@@ -108,14 +108,22 @@ async function applyProfile(filePath: string, options: ProfileOptions): Promise<
 
 	await writeProfile(options.scope, profile);
 	await writeLockfile(options.scope, lockfile);
-	await refreshProfileSources(options.scope);
+	const refreshed = await refreshProfileSources(options.scope);
+	const diagnostics = refreshed.flatMap((r) =>
+		r.diagnostics.map((d) => ({ source: r.source.id, ...d }))
+	);
 	const materialized = await materialize(options.scope);
 	if (options.scope === "global") autoSync();
 
 	if (options.format === "json") {
-		process.stdout.write(`${JSON.stringify({ ok: true, materialized }, null, 2)}\n`);
+		process.stdout.write(`${JSON.stringify({ ok: true, diagnostics, materialized }, null, 2)}\n`);
 	} else {
 		process.stdout.write(`Applied profile from ${inputPath}.\n`);
+		for (const r of refreshed) {
+			if (r.diagnostics.length > 0) {
+				process.stdout.write(`${r.source.id}:\n${formatDiagnostics(r.diagnostics)}`);
+			}
+		}
 	}
 }
 

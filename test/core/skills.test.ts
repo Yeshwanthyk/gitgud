@@ -79,17 +79,16 @@ describe("core/skills", () => {
 		expect(parseSkill(empty, "global").ok).toBe(false);
 	});
 
-	test("parseSkill errors when directory name mismatches frontmatter name", () => {
-		// Copy valid-skill to wrong-name directory
+	test("parseSkill warns when directory name mismatches frontmatter name", () => {
 		const wrongDir = path.join(tmpRoot, "wrong-name");
 		copyFixture("valid-skill", wrongDir);
 
 		const result = parseSkill(wrongDir, "global");
-		expect(result.ok).toBe(false);
-		if (!result.ok) {
-			expect(result.error.message).toContain("must match directory name");
-			expect(result.error.message).toContain("wrong-name");
-			expect(result.error.message).toContain("valid-skill");
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			const warnings = result.value.frontmatter.warnings?.join(" ") ?? "";
+			expect(warnings).toContain("wrong-name");
+			expect(warnings).toContain("valid-skill");
 		}
 	});
 

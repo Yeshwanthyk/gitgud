@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { cp, rename, rm } from "node:fs/promises";
+import { cp, readdir, rename, rm } from "node:fs/promises";
 import path from "node:path";
 
 import type { Scope } from "../types";
@@ -16,6 +16,7 @@ type MaterializeAction =
 type MaterializeResult = {
 	skillsDir: string;
 	actions: MaterializeAction[];
+	prunedCacheDirs: string[];
 };
 
 function requireSkillsDir(scope: Scope): string {
@@ -36,8 +37,9 @@ function sourceCacheDir(cacheRoot: string, source: LockedSource): string {
 	return path.join(cacheRoot, "github", owner, repo, source.resolvedCommit);
 }
 
+// A skill kept from an earlier commit (invalid upstream now) reads that commit's cache.
 function skillSourceDir(cacheRoot: string, source: LockedSource, skill: LockedSkill): string {
-	const base = sourceCacheDir(cacheRoot, source);
+	const base = path.join(path.dirname(sourceCacheDir(cacheRoot, source)), skill.commit);
 	return skill.subpath === "." ? base : path.join(base, skill.subpath);
 }
 
@@ -48,7 +50,6 @@ function enabledPresentSkills(
 	const out: Array<{ source: LockedSource; skill: LockedSkill }> = [];
 	for (const source of Object.values(sources)) {
 		for (const skill of Object.values(source.skills)) {
-			if (skill.status !== "present") continue;
 			if (selections[skill.id] !== "enabled") continue;
 			out.push({ source, skill });
 		}
@@ -59,14 +60,16 @@ function enabledPresentSkills(
 
 function assertNoNameConflicts(skills: Array<{ skill: LockedSkill }>): void {
 	const owners = new Map<string, string>();
+	// Directory names collide case-insensitively on default macOS volumes.
 	for (const { skill } of skills) {
-		const existing = owners.get(skill.name);
+		const key = skill.name.toLowerCase();
+		const existing = owners.get(key);
 		if (existing) {
 			throw new Error(
 				`Enabled skill name conflict: ${skill.name} from ${existing} and ${skill.id}`
 			);
 		}
-		owners.set(skill.name, skill.id);
+		owners.set(key, skill.id);
 	}
 }
 
@@ -112,5 +115,51 @@ export async function materialize(scope: Scope): Promise<MaterializeResult> {
 		actions.push({ action: "installed", skill: skill.name, path: dest });
 	}
 
-	return { skillsDir, actions };
+	const prunedCacheDirs = await pruneCache(cacheRoot, lockfile.sources);
+	return { skillsDir, actions, prunedCacheDirs };
+}
+
+async function subdirs(dir: string): Promise<string[]> {
+	if (!existsSync(dir)) return [];
+	const entries = await readdir(dir, { withFileTypes: true });
+	return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+}
+
+/**
+ * The lock owns the cache: a commit dir stays only while a source resolves to it
+ * or a kept skill still reads from it. Sources can share a repo, so the keep set
+ * is per owner/repo across all sources.
+ */
+async function pruneCache(
+	cacheRoot: string,
+	sources: Record<string, LockedSource>
+): Promise<string[]> {
+	const keep = new Map<string, Set<string>>();
+	for (const source of Object.values(sources)) {
+		const commits = keep.get(source.repo) ?? new Set<string>();
+		commits.add(source.resolvedCommit);
+		for (const skill of Object.values(source.skills)) commits.add(skill.commit);
+		keep.set(source.repo, commits);
+	}
+
+	const pruned: string[] = [];
+	const githubRoot = path.join(cacheRoot, "github");
+	for (const owner of await subdirs(githubRoot)) {
+		const ownerDir = path.join(githubRoot, owner);
+		for (const repo of await subdirs(ownerDir)) {
+			const repoDir = path.join(ownerDir, repo);
+			const commits = keep.get(`${owner}/${repo}`);
+			for (const commit of await subdirs(repoDir)) {
+				if (commits?.has(commit)) continue;
+				const target = path.join(repoDir, commit);
+				await rm(target, { recursive: true, force: true });
+				pruned.push(target);
+			}
+			if ((await readdir(repoDir)).length === 0)
+				await rm(repoDir, { recursive: true, force: true });
+		}
+		if ((await readdir(ownerDir)).length === 0)
+			await rm(ownerDir, { recursive: true, force: true });
+	}
+	return pruned;
 }

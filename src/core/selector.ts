@@ -9,7 +9,6 @@ export type SelectableSkill = {
 	description: string;
 	group: string;
 	state: SelectionState;
-	status: "present" | "removed-upstream";
 };
 
 function clearScreen(): void {
@@ -51,15 +50,11 @@ function render(params: {
 	for (let i = 0; i < items.length; i++) {
 		const item = items[i] as SelectableSkill;
 		const selected = item.state === "enabled";
-		let marker = "[ ]";
-		if (item.status === "removed-upstream") marker = "[-]";
-		else if (selected) marker = "[x]";
+		const marker = selected ? "[x]" : "[ ]";
 		const pointer = i === cursor ? paint(ANSI.cyan, ">") : " ";
-		const name = item.status === "removed-upstream" ? paint(ANSI.gray, item.name) : item.name;
-		const padded = `${truncate(name, nameWidth)}${" ".repeat(Math.max(0, nameWidth - item.name.length))}`;
+		const padded = `${truncate(item.name, nameWidth)}${" ".repeat(Math.max(0, nameWidth - item.name.length))}`;
 		const group = paint(ANSI.gray, truncate(item.group, 22));
-		const status = item.status === "removed-upstream" ? paint(ANSI.red, "removed upstream") : "";
-		process.stdout.write(`${pointer} ${marker} ${padded}  ${group}  ${status}\n`);
+		process.stdout.write(`${pointer} ${marker} ${padded}  ${group}\n`);
 	}
 
 	process.stdout.write("\n");
@@ -163,13 +158,13 @@ export function runSelector(
 			if (key.name === "a" || key.name === "n") {
 				const state: SelectionState = key.name === "a" ? "enabled" : "disabled";
 				for (const item of visibleItems(nextItems, filter)) {
-					if (item.status === "present") item.state = state;
+					item.state = state;
 				}
 				return rerender();
 			}
 			if (key.name === "space") {
 				const item = visibleItems(nextItems, filter)[cursor];
-				if (item && item.status === "present") {
+				if (item) {
 					item.state = item.state === "enabled" ? "disabled" : "enabled";
 				}
 				return rerender();

@@ -54,12 +54,12 @@ describe("sources/github discovery", () => {
 		expect(discovered.ok).toBe(true);
 		if (!discovered.ok) return;
 
-		expect(discovered.value.map((skill) => skill.name)).toEqual([
+		expect(discovered.value.skills.map((skill) => skill.name)).toEqual([
 			"root-skill",
 			"hidden-skill",
 			"review-skill",
 		]);
-		expect(discovered.value.map((skill) => skill.subpath)).toEqual([
+		expect(discovered.value.skills.map((skill) => skill.subpath)).toEqual([
 			".",
 			".agents/skills/hidden",
 			"skills/engineering/review",
@@ -87,7 +87,52 @@ describe("sources/github discovery", () => {
 		expect(discovered.ok).toBe(true);
 		if (!discovered.ok) return;
 
-		expect(discovered.value.map((skill) => skill.name)).toEqual(["breadboarding"]);
-		expect(discovered.value[0]?.subpath).toBe("breadboarding");
+		expect(discovered.value.skills.map((skill) => skill.name)).toEqual(["breadboarding"]);
+		expect(discovered.value.skills[0]?.subpath).toBe("breadboarding");
+	});
+
+	test("skips an invalid skill and keeps the rest of the source", async () => {
+		makeSkill(tmpRoot, "skills/good", "good");
+		makeSkill(tmpRoot, "skills/colon", "colon", "Catch up, read-only: what happened");
+		mkdirSync(path.join(tmpRoot, "skills/bad"), { recursive: true });
+		writeFileSync(path.join(tmpRoot, "skills/bad/SKILL.md"), "---\nname: bad\n---\nbody\n");
+
+		const source = parseGithubSource("github:owner/repo");
+		if (!source.ok) throw source.error;
+		const discovered = await discoverGithubSkills(source.value, tmpRoot);
+		expect(discovered.ok).toBe(true);
+		if (!discovered.ok) return;
+
+		expect(discovered.value.skills.map((skill) => skill.name)).toEqual(["colon", "good"]);
+		expect(discovered.value.diagnostics).toEqual([
+			{
+				subpath: "skills/bad",
+				level: "skipped",
+				message: "Frontmatter requires a non-empty description",
+			},
+			{
+				subpath: "skills/colon",
+				level: "warning",
+				message: "unquoted value containing ': ' was quoted",
+			},
+		]);
+	});
+
+	test("warns on skill names that differ only in case", async () => {
+		makeSkill(tmpRoot, "skills/a/Thing", "Thing");
+		makeSkill(tmpRoot, "skills/b/thing", "thing");
+
+		const source = parseGithubSource("github:owner/repo");
+		if (!source.ok) throw source.error;
+		const discovered = await discoverGithubSkills(source.value, tmpRoot);
+		expect(discovered.ok).toBe(true);
+		if (!discovered.ok) return;
+
+		expect(discovered.value.skills).toHaveLength(2);
+		expect(discovered.value.diagnostics).toContainEqual({
+			subpath: "skills/b/thing",
+			level: "warning",
+			message: "name thing is also used by skills/a/Thing",
+		});
 	});
 });

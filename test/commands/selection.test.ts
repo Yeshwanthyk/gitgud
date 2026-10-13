@@ -17,7 +17,6 @@ const items: SelectableSkill[] = [
 		description: "",
 		group: "root",
 		state: "disabled",
-		status: "present",
 	},
 	{
 		id: secondId,
@@ -25,7 +24,6 @@ const items: SelectableSkill[] = [
 		description: "",
 		group: "root",
 		state: "disabled",
-		status: "present",
 	},
 	{
 		id: "github:owner/one::other",
@@ -33,7 +31,6 @@ const items: SelectableSkill[] = [
 		description: "",
 		group: "root",
 		state: "disabled",
-		status: "present",
 	},
 ];
 
@@ -67,12 +64,13 @@ describe("assertApplicable", () => {
 		).not.toThrow();
 	});
 
-	test("rejects enabling a skill removed upstream", () => {
-		const removed = items.map((item) =>
-			item.id === firstId ? { ...item, status: "removed-upstream" as const } : item
-		);
-		expect(() => assertApplicable(removed, { [firstId]: "enabled" })).toThrow(
-			`Skill removed upstream: ${firstId}.`
+	test("treats names that differ only in case as a conflict", () => {
+		const mixed = [
+			{ ...items[0]!, state: "enabled" as const },
+			{ ...items[1]!, name: "Module-Map" },
+		];
+		expect(() => assertApplicable(mixed, { [secondId]: "enabled" })).toThrow(
+			"Enabled skill name conflict"
 		);
 	});
 });

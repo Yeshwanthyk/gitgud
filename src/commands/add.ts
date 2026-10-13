@@ -2,7 +2,7 @@ import { materialize } from "../core/materialize";
 import { setSelections, writeProfile } from "../core/profile";
 import { runSelector } from "../core/selector";
 import { addGithubSourceToProfile } from "../core/source-manager";
-import { formatError } from "../output";
+import { formatDiagnostics, formatError } from "../output";
 import type { OutputFormat, Scope } from "../types";
 import { buildSelectableSkills } from "./select";
 import { autoSync } from "./sync";
@@ -30,6 +30,7 @@ export async function addCommand(args: string[], options: AddOptions): Promise<v
 	try {
 		const { profile, source, refresh } = await addGithubSourceToProfile(options.scope, sourceInput);
 		const items = await buildSelectableSkills(options.scope, source.id);
+		if (options.format !== "json") process.stdout.write(formatDiagnostics(refresh.diagnostics));
 		const updates = await runSelector(source.id, items);
 
 		if (!updates) {
@@ -41,6 +42,7 @@ export async function addCommand(args: string[], options: AddOptions): Promise<v
 							source,
 							selected: false,
 							changes: summarizeChanges(refresh.entries),
+							diagnostics: refresh.diagnostics,
 							message: "Tracked source with all new skills disabled.",
 						},
 						null,
@@ -67,6 +69,7 @@ export async function addCommand(args: string[], options: AddOptions): Promise<v
 						source,
 						selected: true,
 						changes: summarizeChanges(refresh.entries),
+						diagnostics: refresh.diagnostics,
 						materialized,
 					},
 					null,

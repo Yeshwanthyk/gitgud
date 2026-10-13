@@ -26,7 +26,6 @@ export async function statusCommand(_args: string[], options: StatusOptions): Pr
 					source: source.id,
 					name: skill.name,
 					subpath: skill.subpath,
-					upstream: skill.status,
 					selection: profile.selections[skill.id] ?? "disabled",
 					contentHash: skill.contentHash,
 				});
@@ -54,9 +53,7 @@ export async function statusCommand(_args: string[], options: StatusOptions): Pr
 				process.stdout.write(`\n${paint(ANSI.bold, currentSource)}\n`);
 			}
 			const selection = row.selection === "enabled" ? paint(ANSI.green, "enabled ") : "disabled";
-			const upstream =
-				row.upstream === "removed-upstream" ? ` ${paint(ANSI.red, "removed upstream")}` : "";
-			process.stdout.write(`  ${selection}  ${row.name}${upstream}\n`);
+			process.stdout.write(`  ${selection}  ${row.name}\n`);
 		}
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unknown status error";

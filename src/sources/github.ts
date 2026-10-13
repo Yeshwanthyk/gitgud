@@ -52,6 +52,12 @@ export type DiscoveredGithubSkill = {
 	contentHash: string;
 };
 
+export type SkillDiagnostic = {
+	subpath: string;
+	level: "warning" | "skipped";
+	message: string;
+};
+
 /** Normalize any accepted GitHub spelling into a single `github:owner/repo[/sub][#ref]` source. */
 function normalizeGithubSource(inputUrl: string, subpath?: string): Result<string> {
 	const trimmed = inputUrl.trim();
@@ -353,7 +359,7 @@ export async function cacheGithubSnapshot(
 export async function discoverGithubSkills(
 	source: GithubSource,
 	rootDir: string
-): Promise<Result<DiscoveredGithubSkill[]>> {
+): Promise<Result<{ skills: DiscoveredGithubSkill[]; diagnostics: SkillDiagnostic[] }>> {
 	const candidateDirs = await findAllSkillDirs(rootDir);
 	if (candidateDirs.length === 0) {
 		return err(
@@ -366,11 +372,23 @@ export async function discoverGithubSkills(
 
 	const parseOpts = { enforceDirName: false } as const;
 	const skills: DiscoveredGithubSkill[] = [];
+	const diagnostics: SkillDiagnostic[] = [];
 	for (const candidateDir of candidateDirs) {
-		const parsed = parseSkill(candidateDir, "local", parseOpts);
-		if (!parsed.ok) return err(parsed.error);
 		const subpath = path.relative(rootDir, candidateDir);
 		const normalizedSubpath = subpath.length > 0 ? subpath : ".";
+		const parsed = parseSkill(candidateDir, "local", parseOpts);
+		// One bad manifest skips that skill, not the whole source.
+		if (!parsed.ok) {
+			diagnostics.push({
+				subpath: normalizedSubpath,
+				level: "skipped",
+				message: parsed.error.message,
+			});
+			continue;
+		}
+		for (const message of parsed.value.frontmatter.warnings ?? []) {
+			diagnostics.push({ subpath: normalizedSubpath, level: "warning", message });
+		}
 		const id = `${source.id}::${normalizedSubpath}`;
 		skills.push({
 			id,
@@ -383,8 +401,29 @@ export async function discoverGithubSkills(
 		});
 	}
 
+	// Two skills with one name would collide at install; flag it where the cause is visible.
+	const seenNames = new Map<string, string>();
+	for (const skill of skills) {
+		const key = skill.name.toLowerCase();
+		const other = seenNames.get(key);
+		if (other) {
+			diagnostics.push({
+				subpath: skill.subpath,
+				level: "warning",
+				message: `name ${skill.name} is also used by ${other}`,
+			});
+		} else seenNames.set(key, skill.subpath);
+	}
+
+	if (skills.length === 0) {
+		return err(
+			new Error(
+				`No valid skills: ${diagnostics.map((d) => `${d.subpath}: ${d.message}`).join("; ")}`
+			)
+		);
+	}
 	skills.sort((a, b) => a.subpath.localeCompare(b.subpath));
-	return ok(skills);
+	return ok({ skills, diagnostics });
 }
 
 export interface GithubInstallResult {

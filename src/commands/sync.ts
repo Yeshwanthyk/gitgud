@@ -13,7 +13,7 @@ import path from "node:path";
 
 import { ANSI, paint } from "../core/colors";
 import { getAgentSkillsDirs, getGlobalSkillsDir } from "../core/paths";
-import { listSkillDirNames } from "../core/skills";
+import { findSkillManifestPath, listSkillDirNames } from "../core/skills";
 import { formatError } from "../output";
 import type { OutputFormat } from "../types";
 
@@ -188,9 +188,9 @@ function findUnmanaged(params: {
 		if (lst.isSymbolicLink()) {
 			const resolved = readLinkAbs(dest);
 			if (!resolved || isInside(resolved, sourceDir)) continue;
-			reason = `symlink → ${resolved}`;
+			reason = existsSync(resolved) ? `symlink → ${resolved}` : `broken symlink → ${resolved}`;
 		} else if (lst.isDirectory()) {
-			reason = "existing directory";
+			reason = findSkillManifestPath(dest) ? "existing directory" : "directory without SKILL.md";
 		} else if (lst.isFile()) {
 			reason = "existing file";
 		} else {

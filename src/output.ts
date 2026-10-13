@@ -20,9 +20,15 @@ function truncate(text: string, max: number): string {
 	return clean.length <= max ? clean : `${clean.slice(0, max - 1)}…`;
 }
 
+/** Parse warnings are diagnostics for install time, not part of a skill's public shape. */
+function publicSkill(skill: Skill): Skill {
+	const { warnings: _warnings, ...frontmatter } = skill.frontmatter;
+	return { ...skill, frontmatter };
+}
+
 export function formatSkillList(skills: Skill[], format: OutputFormat): string {
 	if (format === "json") {
-		return JSON.stringify(skills, null, 2);
+		return JSON.stringify(skills.map(publicSkill), null, 2);
 	}
 
 	if (format === "robot") {
@@ -65,7 +71,7 @@ export function formatSkillDetail(
 	basePath: string = skill.path
 ): string {
 	if (format === "json") {
-		return JSON.stringify({ ...skill, base: basePath, content }, null, 2);
+		return JSON.stringify({ ...publicSkill(skill), base: basePath, content }, null, 2);
 	}
 
 	if (format === "robot") {
@@ -82,4 +88,11 @@ export function formatError(message: string, format: OutputFormat): string {
 	}
 
 	return `Error: ${message}`;
+}
+
+/** One line per skipped or warned skill, indented under its source's summary line. */
+export function formatDiagnostics(
+	diagnostics: readonly { subpath: string; level: string; message: string }[]
+): string {
+	return diagnostics.map((d) => `  ${d.level} ${d.subpath}: ${d.message}\n`).join("");
 }

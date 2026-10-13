@@ -5,20 +5,18 @@ import path from "node:path";
 import type { Scope } from "../types";
 import { ensureDir, getLockfilePath } from "./paths";
 
-type LockedSkillStatus = "present" | "removed-upstream";
-
 export type LockedSkill = {
 	id: string;
 	sourceId: string;
 	name: string;
 	description: string;
 	subpath: string;
-	status: LockedSkillStatus;
+	/** Always "present"; written for compatibility with older gitgud readers. */
+	status: "present";
 	contentHash: string;
 	commit: string;
 	lastSeenCommit: string;
 	lastSeenAt: string;
-	removedAt?: string;
 };
 
 export type LockedSource = {
@@ -46,9 +44,9 @@ export function emptyLockfile(): GitgudLockfile {
 	return { version: 1, sources: {} };
 }
 
-function parseStatus(value: unknown): LockedSkillStatus {
-	if (value === "present" || value === "removed-upstream") return value;
-	throw new Error("Invalid lockfile skill status.");
+/** Older locks kept "removed-upstream" tombstones; those entries are dropped on read. */
+function isTombstone(value: unknown): boolean {
+	return isRecord(value) && value["status"] === "removed-upstream";
 }
 
 function parseSkill(value: unknown): LockedSkill {
@@ -62,9 +60,9 @@ function parseSkill(value: unknown): LockedSkill {
 	const commit = value["commit"];
 	const lastSeenCommit = value["lastSeenCommit"];
 	const lastSeenAt = value["lastSeenAt"];
-	const removedAt = value["removedAt"];
 
 	if (
+		value["status"] !== "present" ||
 		typeof id !== "string" ||
 		typeof sourceId !== "string" ||
 		typeof name !== "string" ||
@@ -77,22 +75,17 @@ function parseSkill(value: unknown): LockedSkill {
 	) {
 		throw new Error("Invalid lockfile skill.");
 	}
-	if (removedAt !== undefined && typeof removedAt !== "string") {
-		throw new Error("Invalid lockfile removedAt.");
-	}
-
 	return {
 		id,
 		sourceId,
 		name,
 		description,
 		subpath,
-		status: parseStatus(value["status"]),
+		status: "present",
 		contentHash,
 		commit,
 		lastSeenCommit,
 		lastSeenAt,
-		...(removedAt !== undefined ? { removedAt } : {}),
 	};
 }
 
@@ -126,6 +119,7 @@ function parseSource(value: unknown): LockedSource {
 
 	const skills: Record<string, LockedSkill> = {};
 	for (const [subpathKey, skillRaw] of Object.entries(skillsRaw)) {
+		if (isTombstone(skillRaw)) continue;
 		const skill = parseSkill(skillRaw);
 		if (skill.subpath !== subpathKey) {
 			throw new Error(`Lockfile subpath mismatch: ${subpathKey}`);
