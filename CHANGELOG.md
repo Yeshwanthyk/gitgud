@@ -4,6 +4,13 @@ All notable changes to gitgud will be documented in this file.
 
 ## Unreleased
 
+## [0.0.16] - 2026-10-13
+
+### Fixed
+
+- Frontmatter: a top-level value containing `: `, such as an unquoted description, no longer rejects the skill. gitgud quotes it and writes the strict form into the installed copy, so Pi loads it.
+- Frontmatter: nested or non-string `metadata` values are kept as text instead of rejecting the skill.
+
 ## [0.0.15] - 2026-10-05
 
 ### Added
