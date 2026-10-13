@@ -46,15 +46,44 @@ function normalizeMetadata(value: unknown): Result<Record<string, string> | unde
 		return err(new Error("Frontmatter metadata must be a YAML mapping"));
 	}
 
+	// Harnesses ignore metadata, so a nested or non-string value is kept as text
+	// rather than rejecting the skill.
 	const record = value as Record<string, unknown>;
 	const out: Record<string, string> = {};
 	for (const [k, v] of Object.entries(record)) {
-		if (typeof v !== "string") {
-			return err(new Error(`Frontmatter metadata values must be strings (key: ${k})`));
-		}
-		out[k] = v;
+		if (v === null || v === undefined) continue;
+		out[k] = typeof v === "object" ? JSON.stringify(v) : String(v);
 	}
 	return ok(out);
+}
+
+const TOP_LEVEL_PLAIN_VALUE = /^([A-Za-z0-9_-]+):[ \t]+(\S.*?)[ \t]*$/;
+const YAML_VALUE_INDICATOR = /^['"|>[{&*!%@`]/;
+
+/**
+ * Quote top-level plain values that strict YAML rejects, such as
+ * `description: Do X: then Y`. Returns undefined when nothing needed quoting.
+ */
+function repairFrontmatterYaml(yamlText: string): string | undefined {
+	let changed = false;
+	const lines = yamlText.split(/\r?\n/).map((line) => {
+		const match = line.match(TOP_LEVEL_PLAIN_VALUE);
+		if (!match) return line;
+		const [, key, value] = match as unknown as [string, string, string];
+		if (YAML_VALUE_INDICATOR.test(value) || !/: |:$/.test(value)) return line;
+		changed = true;
+		return `${key}: '${value.replace(/'/g, "''")}'`;
+	});
+	return changed ? lines.join("\n") : undefined;
+}
+
+function parseYamlText(yamlText: string): Result<unknown> {
+	try {
+		return ok(parseYaml(yamlText));
+	} catch (error) {
+		const message = error instanceof Error ? error.message : "Unknown YAML parse error";
+		return err(new Error(`Invalid YAML frontmatter: ${message}`));
+	}
 }
 
 export function parseFrontmatter(content: string): Result<SkillFrontmatter> {
@@ -66,15 +95,32 @@ export function parseFrontmatter(content: string): Result<SkillFrontmatter> {
 	}
 
 	const yamlText = match[1] as string;
-	let parsed: unknown;
-	try {
-		parsed = parseYaml(yamlText);
-	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unknown YAML parse error";
-		return err(new Error(`Invalid YAML frontmatter: ${message}`));
+	let parsed = parseYamlText(yamlText);
+	if (!parsed.ok) {
+		const repaired = repairFrontmatterYaml(yamlText);
+		if (repaired === undefined) return err(parsed.error);
+		parsed = parseYamlText(repaired);
+		if (!parsed.ok) return err(parsed.error);
 	}
 
-	return validateFrontmatter(parsed);
+	return validateFrontmatter(parsed.value);
+}
+
+/**
+ * Rewrite a manifest whose frontmatter only parses after repair, so harnesses
+ * with strict YAML parsers (Pi) load the installed copy. Returns the new
+ * content, or undefined when the manifest is already strict YAML.
+ */
+export function repairManifest(content: string): string | undefined {
+	const normalized = content.replace(/^\uFEFF/, "");
+	const match = normalized.match(FRONTMATTER_REGEX);
+	if (!match) return undefined;
+	const yamlText = match[1] as string;
+	if (parseYamlText(yamlText).ok) return undefined;
+	const repaired = repairFrontmatterYaml(yamlText);
+	if (repaired === undefined || !parseYamlText(repaired).ok) return undefined;
+	const start = normalized.indexOf(yamlText);
+	return normalized.slice(0, start) + repaired + normalized.slice(start + yamlText.length);
 }
 
 interface RawFrontmatter {

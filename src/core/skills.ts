@@ -1,8 +1,8 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { err, ok, type Result, type Scope, type Skill } from "../types";
-import { parseFrontmatter } from "./frontmatter";
+import { parseFrontmatter, repairManifest } from "./frontmatter";
 import {
 	getAgentSkillsDirs,
 	getGlobalSkillsDir,
@@ -28,6 +28,14 @@ export function findSkillManifestPath(skillDir: string): string | undefined {
 		if (existsSync(candidate)) return candidate;
 	}
 	return undefined;
+}
+
+/** Rewrite an installed manifest's frontmatter to strict YAML when it needs repair. */
+export function repairSkillManifest(skillDir: string): void {
+	const manifestPath = findSkillManifestPath(skillDir);
+	if (!manifestPath) return;
+	const repaired = repairManifest(readFileSync(manifestPath, "utf8"));
+	if (repaired !== undefined) writeFileSync(manifestPath, repaired, "utf8");
 }
 
 export function parseSkill(

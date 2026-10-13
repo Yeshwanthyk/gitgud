@@ -6,7 +6,7 @@ import type { Scope } from "../types";
 import { type LockedSkill, type LockedSource, readLockfile } from "./lockfile";
 import { ensureDir, getCacheDir, getSkillsDir } from "./paths";
 import { readProfile } from "./profile";
-import { findSkillManifestPath, listSkillDirNames } from "./skills";
+import { findSkillManifestPath, listSkillDirNames, repairSkillManifest } from "./skills";
 
 type MaterializeAction =
 	| { action: "installed"; skill: string; path: string }
@@ -71,6 +71,7 @@ function assertNoNameConflicts(skills: Array<{ skill: LockedSkill }>): void {
 }
 
 async function canonicalizeSkillManifest(skillDir: string): Promise<void> {
+	repairSkillManifest(skillDir);
 	const manifestPath = findSkillManifestPath(skillDir);
 	if (!manifestPath || path.basename(manifestPath) === "SKILL.md") return;
 

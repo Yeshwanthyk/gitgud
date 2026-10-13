@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { parseFrontmatter, validateFrontmatter } from "../../src/core/frontmatter";
+import { parse as parseYaml } from "yaml";
+
+import { parseFrontmatter, repairManifest, validateFrontmatter } from "../../src/core/frontmatter";
 
 const readFixture = async (name: string) => {
 	const path = `test/fixtures/${name}/SKILL.md`;
@@ -128,15 +130,15 @@ describe("validateFrontmatter", () => {
 		}
 	});
 
-	test("rejects metadata with non-string values", () => {
+	test("stringifies non-string metadata values", () => {
 		const result = validateFrontmatter({
 			name: "test",
 			description: "test",
 			metadata: { version: 1 },
 		});
-		expect(result.ok).toBe(false);
-		if (!result.ok) {
-			expect(result.error.message).toContain("version");
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value.metadata).toEqual({ version: "1" });
 		}
 	});
 
@@ -195,5 +197,65 @@ describe("validateFrontmatter", () => {
 		if (!result.ok) {
 			expect(result.error.message).toContain("disable-model-invocation");
 		}
+	});
+});
+
+describe("lenient frontmatter", () => {
+	const colonManifest = [
+		"---",
+		"name: recap",
+		"description: Catch up, read-only: what happened and why it's done.",
+		"disable-model-invocation: true",
+		"---",
+		"",
+		"# Recap",
+		"",
+	].join("\n");
+
+	test("accepts an unquoted description containing ': '", () => {
+		const result = parseFrontmatter(colonManifest);
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value.description).toBe(
+				"Catch up, read-only: what happened and why it's done."
+			);
+			expect(result.value.disableModelInvocation).toBe(true);
+		}
+	});
+
+	test("keeps nested metadata as text", () => {
+		const content = [
+			"---",
+			"name: research",
+			"description: Research things.",
+			"metadata:",
+			"  credits:",
+			"    author: Matt Pocock",
+			"  version: 2",
+			"---",
+			"",
+		].join("\n");
+		const result = parseFrontmatter(content);
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.value.metadata).toEqual({
+				credits: JSON.stringify({ author: "Matt Pocock" }),
+				version: "2",
+			});
+		}
+	});
+
+	test("repairManifest rewrites frontmatter to strict YAML and keeps the body", () => {
+		const repaired = repairManifest(colonManifest);
+		expect(repaired).toBeDefined();
+		const yamlText = (repaired as string).split("---")[1] as string;
+		expect(parseYaml(yamlText).description).toBe(
+			"Catch up, read-only: what happened and why it's done."
+		);
+		expect((repaired as string).endsWith("---\n\n# Recap\n")).toBe(true);
+	});
+
+	test("repairManifest leaves strict YAML alone", () => {
+		expect(repairManifest("---\nname: a\ndescription: 'x: y'\n---\n")).toBeUndefined();
 	});
 });

@@ -15,7 +15,7 @@ import {
 import os from "node:os";
 import path from "node:path";
 
-import { findSkillManifestPath, parseSkill } from "../core/skills";
+import { findSkillManifestPath, parseSkill, repairSkillManifest } from "../core/skills";
 import { err, ok, type Result, type SkillMeta } from "../types";
 import { parseSource } from "./parse";
 
@@ -234,6 +234,7 @@ async function listFilesRecursive(dir: string): Promise<string[]> {
 }
 
 async function canonicalizeSkillManifest(skillDir: string): Promise<void> {
+	repairSkillManifest(skillDir);
 	const manifestPath = findSkillManifestPath(skillDir);
 	if (!manifestPath || path.basename(manifestPath) === "SKILL.md") return;
 
